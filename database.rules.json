@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": true,
+    ".write": false,
+    "game": {
+      ".write": "auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN'",
+      ".validate": "newData.hasChildren(['title', 'home', 'away', 'homeScore', 'awayScore', 'status']) && newData.child('homeScore').isNumber() && newData.child('awayScore').isNumber() && newData.child('homeScore').val() >= 0 && newData.child('awayScore').val() >= 0"
+    },
+    "polls": {
+      "$pollId": {
+        ".write": "auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN'",
+        "options": {
+          "$optionId": {
+            "votes": {
+              ".write": "(auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN') || (data.isNumber() && newData.isNumber() && newData.val() == data.val() + 1)",
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            }
+          }
+        }
+      }
+    }
+  }
+}

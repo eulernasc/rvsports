@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f20aa6">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Painel ADM | RV SPORTS</title>
+  <link rel="icon" href="assets/logo-rv.jpg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="admin-body">
+  <div class="page-glow page-glow-one"></div>
+
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <img src="assets/logo-rv.jpg" alt="Logo RV SPORTS">
+      <span><strong>RV</strong> SPORTS</span>
+    </a>
+    <nav>
+      <a href="index.html">Voltar ao site</a>
+    </nav>
+  </header>
+
+  <main class="admin-main">
+    <section class="login-card" id="loginSection">
+      <span class="eyebrow">ÁREA RESTRITA</span>
+      <h1>Painel administrativo</h1>
+      <p>Entre para atualizar o placar e controlar as votações.</p>
+
+      <form id="loginForm" class="form-stack">
+        <label>
+          E-mail
+          <input id="loginEmail" type="email" autocomplete="username" required placeholder="seuemail@gmail.com">
+        </label>
+        <label>
+          Senha
+          <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••">
+        </label>
+        <button class="button button-primary" type="submit">Entrar no painel</button>
+      </form>
+      <p class="demo-hint" id="demoHint"></p>
+      <p class="form-message" id="loginMessage"></p>
+    </section>
+
+    <section id="adminDashboard" class="admin-dashboard hidden">
+      <div class="admin-heading">
+        <div>
+          <span class="eyebrow">CONTROLE DA RODADA</span>
+          <h1>Painel RV SPORTS</h1>
+          <p id="adminModeText">Conectado.</p>
+        </div>
+        <button class="button button-secondary" id="logoutButton" type="button">Sair</button>
+      </div>
+
+      <div class="admin-grid">
+        <article class="admin-card admin-card-wide">
+          <div class="card-heading">
+            <div>
+              <span class="eyebrow">PLACAR</span>
+              <h2>Jogo em destaque</h2>
+            </div>
+            <span class="connection-badge" id="adminModeBadge">Online</span>
+          </div>
+
+          <form id="gameForm" class="game-form">
+            <label class="field-span-2">
+              Nome da partida/rodada
+              <input id="gameTitleInput" required placeholder="Copa do Bairro • Rodada 1">
+            </label>
+
+            <label>
+              Time da casa
+              <input id="homeNameInput" required placeholder="União FC">
+            </label>
+            <label>
+              Time visitante
+              <input id="awayNameInput" required placeholder="Vila Real">
+            </label>
+
+            <div class="score-control">
+              <span>Gols da casa</span>
+              <div>
+                <button type="button" class="score-button" data-score-target="homeScoreInput" data-delta="-1">−</button>
+                <input id="homeScoreInput" type="number" min="0" value="0" required>
+                <button type="button" class="score-button" data-score-target="homeScoreInput" data-delta="1">+</button>
+              </div>
+            </div>
+
+            <div class="score-control">
+              <span>Gols do visitante</span>
+              <div>
+                <button type="button" class="score-button" data-score-target="awayScoreInput" data-delta="-1">−</button>
+                <input id="awayScoreInput" type="number" min="0" value="0" required>
+                <button type="button" class="score-button" data-score-target="awayScoreInput" data-delta="1">+</button>
+              </div>
+            </div>
+
+            <label>
+              Situação
+              <select id="gameStatusInput">
+                <option>PRÉ-JOGO</option>
+                <option>AO VIVO</option>
+                <option>INTERVALO</option>
+                <option>ENCERRADO</option>
+                <option>ADIADO</option>
+              </select>
+            </label>
+
+            <label>
+              Horário/tempo
+              <input id="gameClockInput" placeholder="Hoje • 19h30 ou 32' 2ºT">
+            </label>
+
+            <label class="field-span-2">
+              Local
+              <input id="gameVenueInput" placeholder="Campo Municipal">
+            </label>
+
+            <button class="button button-primary field-span-2" type="submit">Salvar placar e informações</button>
+            <p class="form-message field-span-2" id="gameMessage"></p>
+          </form>
+        </article>
+
+        <article class="admin-card">
+          <div class="card-heading">
+            <div>
+              <span class="eyebrow">NOVA ENQUETE</span>
+              <h2 id="pollFormTitle">Criar votação</h2>
+            </div>
+          </div>
+
+          <form id="pollForm" class="form-stack">
+            <input type="hidden" id="pollIdInput">
+            <label>
+              Pergunta
+              <input id="pollQuestionInput" required placeholder="Quem foi o melhor jogador?">
+            </label>
+            <label>
+              Opções — uma por linha
+              <textarea id="pollOptionsInput" required rows="7" placeholder="João\nLucas\nMatheus\nPedro"></textarea>
+            </label>
+            <label class="check-label">
+              <input id="pollActiveInput" type="checkbox" checked>
+              Deixar votação visível no site
+            </label>
+            <p class="small-warning hidden" id="editWarning">Ao salvar a edição, os votos atuais desta enquete serão zerados.</p>
+            <button class="button button-primary" type="submit" id="pollSubmitButton">Criar votação</button>
+            <button class="button button-ghost hidden" type="button" id="cancelEditButton">Cancelar edição</button>
+            <p class="form-message" id="pollMessage"></p>
+          </form>
+        </article>
+
+        <article class="admin-card admin-card-wide">
+          <div class="card-heading">
+            <div>
+              <span class="eyebrow">GERENCIAMENTO</span>
+              <h2>Votações cadastradas</h2>
+            </div>
+          </div>
+          <div class="admin-poll-list" id="adminPollList">
+            <div class="loading-card">Carregando...</div>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

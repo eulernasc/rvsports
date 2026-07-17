@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f20aa6">
+  <meta name="description" content="RV SPORTS — placar ao vivo e votações do campeonato de bairro.">
+  <title>RV SPORTS | Campeonato do Bairro</title>
+  <link rel="icon" href="assets/logo-rv.jpg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="page-glow page-glow-one"></div>
+  <div class="page-glow page-glow-two"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#inicio" aria-label="RV SPORTS — início">
+      <img src="assets/logo-rv.jpg" alt="Logo RV SPORTS">
+      <span><strong>RV</strong> SPORTS</span>
+    </a>
+    <nav aria-label="Navegação principal">
+      <a href="#jogo">Placar</a>
+      <a href="#votacoes">Votações</a>
+      <a class="nav-admin" href="admin.html">Painel ADM</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="inicio">
+      <div class="hero-copy">
+        <span class="eyebrow">CAMPEONATO DO BAIRRO</span>
+        <h1>A resenha começa <span>antes da bola rolar.</span></h1>
+        <p>Acompanhe o placar, escolha os destaques e vote quantas vezes quiser nas enquetes da rodada.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#votacoes">Votar agora</a>
+          <a class="button button-secondary" href="#jogo">Ver placar</a>
+        </div>
+      </div>
+
+      <div class="hero-logo-card" aria-hidden="true">
+        <div class="hero-logo-ring">
+          <img src="assets/logo-rv.jpg" alt="">
+        </div>
+        <span>FUTEBOL • RESENHA • VOTAÇÃO</span>
+      </div>
+    </section>
+
+    <section class="section" id="jogo">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">JOGO EM DESTAQUE</span>
+          <h2>Placar da rodada</h2>
+        </div>
+        <span class="connection-badge" id="modeBadge">Carregando...</span>
+      </div>
+
+      <article class="scoreboard-card">
+        <div class="match-topline">
+          <div>
+            <span class="live-pill" id="gameStatus">PRÉ-JOGO</span>
+            <h3 id="gameTitle">Copa do Bairro</h3>
+          </div>
+          <div class="match-meta">
+            <span id="gameClock">Hoje</span>
+            <span id="gameVenue">Campo Municipal</span>
+          </div>
+        </div>
+
+        <div class="scoreboard">
+          <div class="team team-home">
+            <div class="team-shield" id="homeInitials">UF</div>
+            <strong id="homeName">União FC</strong>
+          </div>
+
+          <div class="score-center">
+            <div class="score-numbers">
+              <span id="homeScore">0</span>
+              <small>×</small>
+              <span id="awayScore">0</span>
+            </div>
+            <span class="score-caption">PLACAR AO VIVO</span>
+          </div>
+
+          <div class="team team-away">
+            <div class="team-shield" id="awayInitials">VR</div>
+            <strong id="awayName">Vila Real</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section" id="votacoes">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">A VOZ DA TORCIDA</span>
+          <h2>Votações abertas</h2>
+        </div>
+        <p class="section-note">Sem limite por pessoa. Pode votar e provocar à vontade.</p>
+      </div>
+
+      <div class="poll-grid" id="pollGrid" aria-live="polite">
+        <div class="loading-card">Carregando votações...</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <footer>
+    <div class="brand footer-brand">
+      <img src="assets/logo-rv.jpg" alt="Logo RV SPORTS">
+      <span><strong>RV</strong> SPORTS</span>
+    </div>
+    <p>O futebol do bairro do nosso jeito.</p>
+    <a href="admin.html">Acesso administrativo</a>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
