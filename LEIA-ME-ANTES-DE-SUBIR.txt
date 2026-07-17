@@ -1,0 +1,14 @@
+RV SPORTS — PACOTE COMPLETO
+
+1. Extraia este arquivo ZIP.
+2. Abra a pasta RV-SPORTS-SITE-COMPLETO-FINAL.
+3. Arraste TODOS os arquivos e pastas de dentro dela para a raiz do seu repositório no GitHub.
+4. Confirme a substituição dos arquivos com o mesmo nome.
+5. Aguarde o GitHub Pages atualizar e depois pressione Ctrl + F5 no site.
+
+A logo foi corrigida para:
+- ficar sem foto de fundo;
+- não cortar no bloco principal;
+- manter RV SPORTS em rosa e branco;
+- usar o círculo rosa com relevo;
+- manter boa qualidade no cabeçalho e no destaque principal.

@@ -287,14 +287,15 @@ main {
 }
 
 .hero-original-logo {
-  width: min(680px, 92%);
-  aspect-ratio: 1600 / 961;
-  object-fit: cover;
+  width: min(540px, 82%);
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
   object-position: center;
   display: block;
-  border-radius: 26px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.48), 0 0 35px rgba(242,10,166,.16);
-  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
 }
 
 .hero-logo-card > span {
@@ -912,8 +913,8 @@ select option {
   }
 
   .brand-original {
-    width: 184px;
-    height: 52px;
+    width: 170px;
+    height: 48px;
   }
 
   .site-header nav a:not(.nav-admin) {
@@ -941,6 +942,10 @@ select option {
   .hero-logo-card {
     min-height: 310px;
     border-radius: 28px;
+  }
+
+  .hero-original-logo {
+    width: min(420px, 82%);
   }
 
   .section {
