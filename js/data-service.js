@@ -109,9 +109,9 @@ async function loadFirebase() {
   if (firebaseApi) return firebaseApi;
 
   const [appModule, dbModule, authModule] = await Promise.all([
-    import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js"),
-    import("https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js"),
-    import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js")
+    import("https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js"),
+    import("https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js"),
+    import("https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js")
   ]);
 
   const app = appModule.initializeApp(firebaseConfig);

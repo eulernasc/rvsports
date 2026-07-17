@@ -1,0 +1,16 @@
+RV SPORTS — SITE PRONTO PARA GITHUB PAGES
+
+1. Extraia este arquivo ZIP.
+2. Envie TODOS os arquivos e pastas extraídos para a raiz do repositório no GitHub.
+3. Ative o GitHub Pages em Settings > Pages > Deploy from a branch > main > /(root).
+4. Antes do Firebase, o site funciona em modo demonstração.
+5. Para conectar o Firebase, abra js/config.js e substitua os campos COLE_AQUI.
+6. No Firebase, use Authentication por e-mail/senha e Realtime Database.
+7. Troque o e-mail em database.rules.json pelo e-mail do administrador e publique as regras.
+
+Acesso de teste do painel, somente no modo demonstração:
+E-mail: admin@rvsports.com
+Senha: 123456
+
+IMPORTANTE:
+A votação foi feita propositalmente sem limite. Ela é indicada para brincadeira e resenha, não para votação oficial.

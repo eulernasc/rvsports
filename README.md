@@ -1,4 +1,4 @@
- # RV SPORTS — Site de votação e placar
+# RV SPORTS — Site de votação e placar
 
 Site estático compatível com GitHub Pages, com visual preto, branco e rosa baseado na identidade da RV SPORTS.
 
@@ -45,3 +45,13 @@ Os dados ficam somente no navegador usado no teste. Para que todos vejam o mesmo
 ## Observação importante
 
 O projeto foi feito propositalmente para permitir votos ilimitados. Isso significa que uma pessoa pode clicar várias vezes e também automatizar votos. É adequado para brincadeira e resenha; não deve ser tratado como uma votação oficial ou auditável.
+
+## Arquivos da identidade visual
+
+A pasta `assets` também inclui cópias das imagens originais enviadas:
+
+- `logo-rv.jpg`: símbolo usado no site.
+- `logo-rv-horizontal.jpg`: versão horizontal original.
+- `logo-rv-completa.jpg`: versão completa original.
+
+O layout foi construído ao redor da identidade, sem redesenhar ou descaracterizar a marca.
