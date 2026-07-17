@@ -50,7 +50,7 @@ O projeto foi feito propositalmente para permitir votos ilimitados. Isso signifi
 
 A pasta `assets` também inclui cópias das imagens originais enviadas:
 
-- `logo-rv-original.jpg`: logo horizontal original utilizada no cabeçalho, destaque principal, rodapé e painel administrativo.
+- `logo-rv-original.jpg`: logo horizontal ajustada utilizada no cabeçalho, destaque principal, rodapé e painel administrativo.
 - Os demais arquivos de logo foram mantidos apenas como referência.
 
 O layout foi construído ao redor da identidade, sem redesenhar ou descaracterizar a marca.

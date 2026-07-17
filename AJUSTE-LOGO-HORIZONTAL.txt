@@ -1,0 +1,1 @@
+Projeto atualizado para usar a logo horizontal sem o círculo branco, em tamanho maior no cabeçalho, destaque principal, rodapé e painel administrativo.
