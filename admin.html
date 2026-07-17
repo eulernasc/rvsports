@@ -77,6 +77,40 @@
               <input id="awayNameInput" required placeholder="Vila Real">
             </label>
 
+            <div class="team-image-field">
+              <div class="team-image-preview" id="homeImagePreview" aria-label="Prévia do escudo do time da casa">
+                <span>UF</span>
+              </div>
+              <div class="team-image-content">
+                <strong>Escudo do time da casa</strong>
+                <p>Opcional. A imagem é reduzida automaticamente antes de salvar.</p>
+                <div class="team-image-actions">
+                  <label class="button button-secondary file-button">
+                    Escolher imagem
+                    <input id="homeImageInput" type="file" accept="image/*">
+                  </label>
+                  <button class="button button-ghost" id="removeHomeImageButton" type="button">Remover</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="team-image-field">
+              <div class="team-image-preview away-preview" id="awayImagePreview" aria-label="Prévia do escudo do time visitante">
+                <span>VR</span>
+              </div>
+              <div class="team-image-content">
+                <strong>Escudo do time visitante</strong>
+                <p>Se não escolher uma imagem, o site continuará mostrando as iniciais.</p>
+                <div class="team-image-actions">
+                  <label class="button button-secondary file-button">
+                    Escolher imagem
+                    <input id="awayImageInput" type="file" accept="image/*">
+                  </label>
+                  <button class="button button-ghost" id="removeAwayImageButton" type="button">Remover</button>
+                </div>
+              </div>
+            </div>
+
             <div class="score-control">
               <span>Gols da casa</span>
               <div>

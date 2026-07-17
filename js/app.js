@@ -41,17 +41,41 @@ function showToast(message) {
   showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2600);
 }
 
+function isSafeImageSource(value = "") {
+  return /^data:image\/(?:png|jpeg|webp);base64,/i.test(value) || /^https:\/\//i.test(value);
+}
+
+function renderTeamShield(element, imageSource, teamName) {
+  element.replaceChildren();
+
+  if (isSafeImageSource(imageSource)) {
+    const image = document.createElement("img");
+    image.src = imageSource;
+    image.alt = `Escudo do ${teamName || "time"}`;
+    image.loading = "eager";
+    element.appendChild(image);
+    element.classList.add("has-image");
+    return;
+  }
+
+  element.textContent = initials(teamName);
+  element.classList.remove("has-image");
+}
+
 function renderGame(game) {
   const status = game.status || "PRÉ-JOGO";
+  const homeName = game.home || "Time da casa";
+  const awayName = game.away || "Time visitante";
+
   elements.gameStatus.textContent = status;
   elements.gameStatus.classList.toggle("is-live", status === "AO VIVO");
   elements.gameTitle.textContent = game.title || "Copa do Bairro";
   elements.gameClock.textContent = game.clock || "Horário a definir";
   elements.gameVenue.textContent = game.venue || "Local a definir";
-  elements.homeName.textContent = game.home || "Time da casa";
-  elements.awayName.textContent = game.away || "Time visitante";
-  elements.homeInitials.textContent = initials(game.home);
-  elements.awayInitials.textContent = initials(game.away);
+  elements.homeName.textContent = homeName;
+  elements.awayName.textContent = awayName;
+  renderTeamShield(elements.homeInitials, game.homeImage, homeName);
+  renderTeamShield(elements.awayInitials, game.awayImage, awayName);
   elements.homeScore.textContent = Number(game.homeScore || 0);
   elements.awayScore.textContent = Number(game.awayScore || 0);
 }

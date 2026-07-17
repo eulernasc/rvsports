@@ -16,6 +16,12 @@ const elements = {
   adminModeBadge: $("#adminModeBadge"),
   gameForm: $("#gameForm"),
   gameMessage: $("#gameMessage"),
+  homeImageInput: $("#homeImageInput"),
+  awayImageInput: $("#awayImageInput"),
+  homeImagePreview: $("#homeImagePreview"),
+  awayImagePreview: $("#awayImagePreview"),
+  removeHomeImageButton: $("#removeHomeImageButton"),
+  removeAwayImageButton: $("#removeAwayImageButton"),
   pollForm: $("#pollForm"),
   pollFormTitle: $("#pollFormTitle"),
   pollSubmitButton: $("#pollSubmitButton"),
@@ -28,6 +34,8 @@ const elements = {
 
 let currentPolls = [];
 let gameLoadedOnce = false;
+const teamImages = { home: "", away: "" };
+const teamImageDirty = { home: false, away: false };
 
 function setMessage(element, message, type = "") {
   element.textContent = message;
@@ -50,6 +58,105 @@ function escapeHtml(value = "") {
     .replaceAll("'", "&#039;");
 }
 
+function initials(name = "") {
+  const words = String(name).trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "RV";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+}
+
+function isSafeImageSource(value = "") {
+  return /^data:image\/(?:png|jpeg|webp);base64,/i.test(value) || /^https:\/\//i.test(value);
+}
+
+function renderImagePreview(side) {
+  const preview = side === "home" ? elements.homeImagePreview : elements.awayImagePreview;
+  const nameInput = side === "home" ? $("#homeNameInput") : $("#awayNameInput");
+  const source = teamImages[side];
+  preview.replaceChildren();
+
+  if (isSafeImageSource(source)) {
+    const image = document.createElement("img");
+    image.src = source;
+    image.alt = `Prévia do escudo do ${nameInput.value || "time"}`;
+    preview.appendChild(image);
+    preview.classList.add("has-image");
+  } else {
+    const fallback = document.createElement("span");
+    fallback.textContent = initials(nameInput.value);
+    preview.appendChild(fallback);
+    preview.classList.remove("has-image");
+  }
+}
+
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Não foi possível abrir esta imagem."));
+      image.src = String(reader.result);
+    };
+    reader.onerror = () => reject(new Error("Não foi possível ler esta imagem."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressTeamImage(file) {
+  if (!file?.type?.startsWith("image/")) {
+    throw new Error("Escolha uma imagem PNG, JPG ou WEBP.");
+  }
+
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error("A imagem deve ter no máximo 8 MB.");
+  }
+
+  const image = await loadImageFile(file);
+  const maxDimension = 420;
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d", { alpha: true });
+  if (!context) throw new Error("Seu navegador não conseguiu processar a imagem.");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, 0, 0, width, height);
+
+  let result = canvas.toDataURL("image/webp", 0.84);
+  if (result.length > 360000) result = canvas.toDataURL("image/webp", 0.68);
+  if (result.length > 480000) {
+    throw new Error("A imagem ainda ficou muito pesada. Escolha outra mais simples.");
+  }
+  return result;
+}
+
+async function handleTeamImageSelection(side, file) {
+  if (!file) return;
+  setMessage(elements.gameMessage, "Preparando imagem...");
+  try {
+    teamImages[side] = await compressTeamImage(file);
+    teamImageDirty[side] = true;
+    renderImagePreview(side);
+    setMessage(elements.gameMessage, "Imagem pronta. Clique em salvar para publicar.", "success");
+  } catch (error) {
+    console.error(error);
+    setMessage(elements.gameMessage, error.message || "Não foi possível processar a imagem.", "error");
+  }
+}
+
+function removeTeamImage(side) {
+  teamImages[side] = "";
+  teamImageDirty[side] = true;
+  const input = side === "home" ? elements.homeImageInput : elements.awayImageInput;
+  input.value = "";
+  renderImagePreview(side);
+  setMessage(elements.gameMessage, "Escudo removido. Clique em salvar para confirmar.");
+}
+
 function fillGameForm(game) {
   if (!game || !Object.keys(game).length) return;
   $("#gameTitleInput").value = game.title || "";
@@ -60,6 +167,10 @@ function fillGameForm(game) {
   $("#gameStatusInput").value = game.status || "PRÉ-JOGO";
   $("#gameClockInput").value = game.clock || "";
   $("#gameVenueInput").value = game.venue || "";
+  if (!teamImageDirty.home) teamImages.home = game.homeImage || "";
+  if (!teamImageDirty.away) teamImages.away = game.awayImage || "";
+  renderImagePreview("home");
+  renderImagePreview("away");
   gameLoadedOnce = true;
 }
 
@@ -132,6 +243,25 @@ elements.logoutButton.addEventListener("click", async () => {
   await dataService.logout();
 });
 
+elements.homeImageInput.addEventListener("change", () => {
+  handleTeamImageSelection("home", elements.homeImageInput.files?.[0]);
+});
+
+elements.awayImageInput.addEventListener("change", () => {
+  handleTeamImageSelection("away", elements.awayImageInput.files?.[0]);
+});
+
+elements.removeHomeImageButton.addEventListener("click", () => removeTeamImage("home"));
+elements.removeAwayImageButton.addEventListener("click", () => removeTeamImage("away"));
+
+$("#homeNameInput").addEventListener("input", () => {
+  if (!teamImages.home) renderImagePreview("home");
+});
+
+$("#awayNameInput").addEventListener("input", () => {
+  if (!teamImages.away) renderImagePreview("away");
+});
+
 document.querySelectorAll("[data-score-target]").forEach((button) => {
   button.addEventListener("click", () => {
     const input = document.getElementById(button.dataset.scoreTarget);
@@ -152,10 +282,14 @@ elements.gameForm.addEventListener("submit", async (event) => {
       awayScore: $("#awayScoreInput").value,
       status: $("#gameStatusInput").value,
       clock: $("#gameClockInput").value,
-      venue: $("#gameVenueInput").value
+      venue: $("#gameVenueInput").value,
+      homeImage: teamImages.home,
+      awayImage: teamImages.away
     });
+    teamImageDirty.home = false;
+    teamImageDirty.away = false;
     setMessage(elements.gameMessage, "Placar atualizado com sucesso.", "success");
-    showToast("Placar salvo e atualizado no site.");
+    showToast("Placar e escudos atualizados no site.");
   } catch (error) {
     console.error(error);
     setMessage(elements.gameMessage, "Não foi possível salvar. Confira o login e as regras do banco.", "error");
@@ -258,7 +392,9 @@ dataService.onAuthChange((user) => {
 });
 
 dataService.subscribeGame((game) => {
-  if (!gameLoadedOnce || document.activeElement?.tagName !== "INPUT") {
+  const editingTextField = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+  const hasPendingImage = teamImageDirty.home || teamImageDirty.away;
+  if (!gameLoadedOnce || (!editingTextField && !hasPendingImage)) {
     fillGameForm(game);
   }
 }).catch(console.error);

@@ -5,6 +5,7 @@ Site estático compatível com GitHub Pages, com visual preto, branco e rosa bas
 ## O que já vem pronto
 
 - Placar em destaque com atualização pelo painel administrativo.
+- Escudos opcionais dos times com compressão automática e iniciais como alternativa.
 - Situação do jogo: pré-jogo, ao vivo, intervalo, encerrado ou adiado.
 - Votações ilimitadas e resultados em porcentagem.
 - Cadastro, edição, publicação, ocultação, exclusão e zeragem das votações.

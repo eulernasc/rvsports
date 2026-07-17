@@ -1,0 +1,7 @@
+ATUALIZAÇÃO INCLUÍDA
+
+- Painel ADM com upload opcional do escudo dos dois times.
+- Imagens comprimidas automaticamente antes de salvar.
+- Sem imagem, o placar mostra as iniciais normalmente.
+- Placar mobile reorganizado para manter os dois times e o resultado lado a lado.
+- Funciona no modo demonstração e já está preparado para o Firebase Realtime Database.

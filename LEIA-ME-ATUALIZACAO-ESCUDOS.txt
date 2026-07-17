@@ -1,0 +1,7 @@
+RV SPORTS — ATUALIZAÇÃO DE ESCUDOS E CELULAR
+
+1. Envie todos os arquivos e pastas deste projeto para a raiz do repositório, substituindo os antigos.
+2. No painel ADM, agora é possível escolher ou remover o escudo de cada time.
+3. A imagem é reduzida automaticamente. Sem imagem, permanecem as iniciais do time.
+4. O placar no celular foi reorganizado para exibir os dois times e o resultado lado a lado.
+5. Após o GitHub Pages atualizar, pressione Ctrl + F5 no computador ou feche e abra a página no celular.

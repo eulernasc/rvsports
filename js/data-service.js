@@ -19,7 +19,9 @@ const initialDemoData = {
     awayScore: 1,
     status: "AO VIVO",
     clock: "32' • 2º tempo",
-    venue: "Campo Municipal"
+    venue: "Campo Municipal",
+    homeImage: "",
+    awayImage: ""
   },
   polls: {
     previsao: {
@@ -225,7 +227,9 @@ export const dataService = {
       awayScore: Math.max(0, Number(game.awayScore || 0)),
       status: String(game.status || "PRÉ-JOGO"),
       clock: String(game.clock || ""),
-      venue: String(game.venue || "")
+      venue: String(game.venue || ""),
+      homeImage: String(game.homeImage || ""),
+      awayImage: String(game.awayImage || "")
     };
 
     if (!firebaseIsConfigured) {
