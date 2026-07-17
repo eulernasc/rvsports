@@ -113,15 +113,22 @@ img {
 }
 
 .brand img {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 0 0 2px rgba(242,10,166,.35), 0 8px 24px rgba(242,10,166,.25);
+  display: block;
 }
 
-.brand strong {
-  color: var(--pink-light);
+.brand-original {
+  width: 205px;
+  height: 54px;
+  border-radius: 13px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(242,10,166,.28), 0 8px 24px rgba(242,10,166,.18);
+}
+
+.brand-original img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .site-header nav {
@@ -279,21 +286,15 @@ main {
   border-radius: 50%;
 }
 
-.hero-logo-ring {
-  width: min(285px, 70%);
-  aspect-ratio: 1;
-  padding: 9px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, white, var(--pink), rgba(255,255,255,.1));
-  box-shadow: 0 24px 70px rgba(242,10,166,.24);
-}
-
-.hero-logo-ring img {
-  width: 100%;
-  height: 100%;
+.hero-original-logo {
+  width: min(680px, 92%);
+  aspect-ratio: 1600 / 961;
   object-fit: cover;
-  border-radius: 50%;
+  object-position: center;
   display: block;
+  border-radius: 26px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.48), 0 0 35px rgba(242,10,166,.16);
+  border: 1px solid rgba(255,255,255,.09);
 }
 
 .hero-logo-card > span {
@@ -908,13 +909,9 @@ select option {
     top: 7px;
   }
 
-  .brand span {
-    font-size: .88rem;
-  }
-
-  .brand img {
-    width: 38px;
-    height: 38px;
+  .brand-original {
+    width: 160px;
+    height: 44px;
   }
 
   .site-header nav a:not(.nav-admin) {
