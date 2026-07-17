@@ -117,18 +117,22 @@ img {
 }
 
 .brand-original {
-  width: 205px;
-  height: 54px;
-  border-radius: 13px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgba(242,10,166,.28), 0 8px 24px rgba(242,10,166,.18);
+  width: 222px;
+  height: 60px;
+  padding: 5px 9px;
+  border: 1px solid rgba(242,10,166,.30);
+  border-radius: 15px;
+  overflow: visible;
+  background: rgba(7, 7, 10, .34);
+  box-shadow: 0 8px 26px rgba(0,0,0,.24), 0 0 22px rgba(242,10,166,.08);
 }
 
 .brand-original img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
 }
 
 .site-header nav {
@@ -287,15 +291,16 @@ main {
 }
 
 .hero-original-logo {
-  width: min(540px, 82%);
+  width: min(500px, 86%);
   max-width: 100%;
   height: auto;
   object-fit: contain;
   object-position: center;
   display: block;
+  border: 0;
   border-radius: 0;
   box-shadow: none;
-  border: 0;
+  transform: translateZ(0);
 }
 
 .hero-logo-card > span {
@@ -913,8 +918,9 @@ select option {
   }
 
   .brand-original {
-    width: 170px;
-    height: 48px;
+    width: 184px;
+    height: 52px;
+    padding: 4px 7px;
   }
 
   .site-header nav a:not(.nav-admin) {
@@ -945,7 +951,7 @@ select option {
   }
 
   .hero-original-logo {
-    width: min(420px, 82%);
+    width: min(430px, 88%);
   }
 
   .section {
