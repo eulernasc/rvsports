@@ -1,4 +1,4 @@
-# RV SPORTS — Site de votação e placar
+ # RV SPORTS — Site de votação e placar
 
 Site estático compatível com GitHub Pages, com visual preto, branco e rosa baseado na identidade da RV SPORTS.
 
