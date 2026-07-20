@@ -198,7 +198,7 @@ function renderPolls(polls) {
       const alreadyVoted = votedThisPage.has(poll.id);
 
       return `
-        <button class="poll-topic-card${alreadyVoted ? " is-voted" : "}" type="button" data-poll-id="${escapeHtml(poll.id)}" ${alreadyVoted ? 'aria-disabled="true"' : ""}>
+        <button class="poll-topic-card${alreadyVoted ? " is-voted" : ""}" type="button" data-poll-id="${escapeHtml(poll.id)}" ${alreadyVoted ? 'aria-disabled="true"' : ""}>
           <span class="poll-topic-number">VOTAÇÃO ${String(index + 1).padStart(2, "0")}</span>
           <strong>${escapeHtml(poll.question)}</strong>
           <span class="poll-topic-footer">

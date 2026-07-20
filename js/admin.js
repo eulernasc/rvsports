@@ -328,7 +328,7 @@ function renderAdminPolls(polls) {
     }
 
     return `
-      <article class="admin-poll-item${poll.showResults ? " has-results" : "}">
+      <article class="admin-poll-item${poll.showResults ? " has-results" : ""}">
         <div class="admin-poll-main">
           <h3>${escapeHtml(poll.question)}</h3>
           <p><span class="status-dot ${status.className}">${status.label}</span> • ${optionCount} opções • ${result.total} votos</p>
