@@ -1,17 +1,16 @@
-// Cole aqui a configuração do seu aplicativo Web do Firebase.
-// Enquanto estes valores não forem preenchidos, o site funciona em MODO DEMONSTRAÇÃO
-// usando o localStorage do navegador.
+// Configuração do Firebase do projeto RV SPORTS.
+// O site usa Firebase Authentication + Realtime Database.
 export const firebaseConfig = {
-  apiKey: "COLE_AQUI",
-  authDomain: "COLE_AQUI",
-  databaseURL: "COLE_AQUI",
-  projectId: "COLE_AQUI",
-  storageBucket: "COLE_AQUI",
-  messagingSenderId: "COLE_AQUI",
-  appId: "COLE_AQUI"
+  apiKey: "AIzaSyBa1YSfbpwrlWx6Qada81Wm131_Vx_7tm4",
+  authDomain: "rv-sports.firebaseapp.com",
+  databaseURL: "https://rv-sports-default-rtdb.firebaseio.com",
+  projectId: "rv-sports",
+  storageBucket: "rv-sports.firebasestorage.app",
+  messagingSenderId: "74383509106",
+  appId: "1:74383509106:web:b54cf35b4cdf23535524eb"
 };
 
-// Usado somente no modo demonstração.
+// Estes dados são usados somente se o Firebase não estiver configurado.
 export const DEMO_ADMIN_EMAIL = "admin@rvsports.com";
 export const DEMO_ADMIN_PASSWORD = "123456";
 
