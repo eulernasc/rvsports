@@ -4,6 +4,8 @@ const elements = {
   modeBadge: document.querySelector("#modeBadge"),
   gamesGrid: document.querySelector("#gamesGrid"),
   pollGrid: document.querySelector("#pollGrid"),
+  pollResultsSection: document.querySelector("#resultados-votacoes"),
+  pollResultsGrid: document.querySelector("#pollResultsGrid"),
   voteModal: document.querySelector("#voteModal"),
   voteModalTitle: document.querySelector("#voteModalTitle"),
   voteForm: document.querySelector("#voteForm"),
@@ -117,34 +119,111 @@ function renderGames(games) {
   }).join("");
 }
 
+function percentage(votes, total) {
+  if (!total) return 0;
+  return Math.round((Number(votes || 0) / total) * 1000) / 10;
+}
+
+function formatPercentage(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(".", ",");
+}
+
+function getPollResult(poll) {
+  const options = Object.entries(poll.options || {}).map(([id, option]) => ({
+    id,
+    label: option.label || "Opção",
+    votes: Number(option.votes || 0)
+  }));
+  const total = options.reduce((sum, option) => sum + option.votes, 0);
+  const maxVotes = options.length ? Math.max(...options.map((option) => option.votes)) : 0;
+  const winners = total > 0 ? options.filter((option) => option.votes === maxVotes) : [];
+  return { options, total, maxVotes, winners };
+}
+
+function renderClosedPoll(poll, index) {
+  const result = getPollResult(poll);
+  let winnerLabel = "Sem votos registrados";
+  let winnerCaption = "A votação foi encerrada sem votos.";
+
+  if (result.winners.length === 1) {
+    winnerLabel = result.winners[0].label;
+    winnerCaption = "Opção mais votada";
+  } else if (result.winners.length > 1) {
+    winnerLabel = result.winners.map((winner) => winner.label).join(" • ");
+    winnerCaption = "Empate entre as opções mais votadas";
+  }
+
+  const rows = result.options
+    .sort((a, b) => b.votes - a.votes)
+    .map((option) => {
+      const value = percentage(option.votes, result.total);
+      const isWinner = result.total > 0 && option.votes === result.maxVotes;
+      return `
+        <div class="poll-result-option${isWinner ? " is-winner" : "}" style="--result-progress:${value}%">
+          <span class="poll-result-progress" aria-hidden="true"></span>
+          <div class="poll-result-option-content">
+            <strong>${escapeHtml(option.label)}${isWinner ? '<em>MAIS VOTADO</em>' : ""}</strong>
+            <span>${formatPercentage(value)}% • ${option.votes} voto${option.votes === 1 ? "" : "s"}</span>
+          </div>
+        </div>`;
+    }).join("");
+
+  return `
+    <article class="poll-result-card">
+      <div class="poll-result-heading">
+        <span class="poll-topic-number">RESULTADO ${String(index + 1).padStart(2, "0")}</span>
+        <span class="poll-closed-badge">ENCERRADA</span>
+      </div>
+      <h3>${escapeHtml(poll.question)}</h3>
+      <div class="poll-winner-box">
+        <span>${escapeHtml(winnerCaption)}</span>
+        <strong>${escapeHtml(winnerLabel)}</strong>
+      </div>
+      <div class="poll-result-options">${rows}</div>
+      <p class="poll-result-total">Total: ${result.total} voto${result.total === 1 ? "" : "s"}</p>
+    </article>`;
+}
+
 function renderPolls(polls) {
   currentPolls = polls;
   const activePolls = polls.filter((poll) => poll.active);
+  const closedPolls = polls.filter((poll) => !poll.active && poll.showResults);
 
   if (!activePolls.length) {
-    elements.pollGrid.innerHTML = '<div class="empty-state">Nenhuma votação aberta no momento. Volte mais tarde para participar.</div>';
+    elements.pollGrid.innerHTML = '<div class="empty-state">Nenhuma votação aberta no momento. Confira abaixo os resultados já publicados.</div>';
+  } else {
+    elements.pollGrid.innerHTML = activePolls.map((poll, index) => {
+      const options = Object.values(poll.options || {});
+      const total = options.reduce((sum, option) => sum + Number(option.votes || 0), 0);
+      const alreadyVoted = votedThisPage.has(poll.id);
+
+      return `
+        <button class="poll-topic-card${alreadyVoted ? " is-voted" : "}" type="button" data-poll-id="${escapeHtml(poll.id)}" ${alreadyVoted ? 'aria-disabled="true"' : ""}>
+          <span class="poll-topic-number">VOTAÇÃO ${String(index + 1).padStart(2, "0")}</span>
+          <strong>${escapeHtml(poll.question)}</strong>
+          <span class="poll-topic-footer">
+            <span>${options.length} opç${options.length === 1 ? "ão" : "ões"} • ${total} voto${total === 1 ? "" : "s"}</span>
+            <b>${alreadyVoted ? "Voto enviado" : "Abrir votação →"}</b>
+          </span>
+        </button>`;
+    }).join("");
+  }
+
+  if (!closedPolls.length) {
+    elements.pollResultsSection.classList.add("hidden");
+    elements.pollResultsGrid.innerHTML = "";
     return;
   }
 
-  elements.pollGrid.innerHTML = activePolls.map((poll, index) => {
-    const options = Object.values(poll.options || {});
-    const total = options.reduce((sum, option) => sum + Number(option.votes || 0), 0);
-    const alreadyVoted = votedThisPage.has(poll.id);
-
-    return `
-      <button class="poll-topic-card${alreadyVoted ? " is-voted" : ""}" type="button" data-poll-id="${escapeHtml(poll.id)}" ${alreadyVoted ? "aria-disabled=\"true\"" : ""}>
-        <span class="poll-topic-number">VOTAÇÃO ${String(index + 1).padStart(2, "0")}</span>
-        <strong>${escapeHtml(poll.question)}</strong>
-        <span class="poll-topic-footer">
-          <span>${options.length} opç${options.length === 1 ? "ão" : "ões"} • ${total} voto${total === 1 ? "" : "s"}</span>
-          <b>${alreadyVoted ? "Voto enviado" : "Abrir votação →"}</b>
-        </span>
-      </button>`;
-  }).join("");
+  elements.pollResultsSection.classList.remove("hidden");
+  elements.pollResultsGrid.innerHTML = closedPolls.map(renderClosedPoll).join("");
 }
 
 function openVoteModal(poll) {
-  if (!poll) return;
+  if (!poll || !poll.active) {
+    showToast("Esta votação já foi encerrada.");
+    return;
+  }
   if (votedThisPage.has(poll.id)) {
     showToast("Você já votou nesta votação. Recarregue a página para votar nela novamente.");
     return;
@@ -153,9 +232,9 @@ function openVoteModal(poll) {
   const options = Object.entries(poll.options || {});
   elements.votePollId.value = poll.id;
   elements.voteModalTitle.textContent = poll.question || "Votação";
-  elements.voteChoices.innerHTML = options.map(([optionId, option], index) => `
+  elements.voteChoices.innerHTML = options.map(([optionId, option]) => `
     <label class="vote-choice">
-      <input type="radio" name="voteOption" value="${escapeHtml(optionId)}" ${index === 0 ? "" : ""}>
+      <input type="radio" name="voteOption" value="${escapeHtml(optionId)}">
       <span class="vote-check" aria-hidden="true"></span>
       <strong>${escapeHtml(option.label)}</strong>
     </label>`).join("");
@@ -208,10 +287,10 @@ elements.voteForm.addEventListener("submit", async (event) => {
     renderPolls(currentPolls);
     voteSubmitting = false;
     closeVoteModal();
-    showToast("Voto registrado! Para votar nesta opção novamente, recarregue a página.");
+    showToast("Voto registrado! Para votar nesta votação novamente, recarregue a página.");
   } catch (error) {
     console.error(error);
-    setVoteMessage("Não foi possível registrar o voto agora.", "error");
+    setVoteMessage(error.message || "Não foi possível registrar o voto agora.", "error");
     voteSubmitting = false;
   } finally {
     submitButton.disabled = false;

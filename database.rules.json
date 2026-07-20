@@ -14,7 +14,7 @@
         "options": {
           "$optionId": {
             "votes": {
-              ".write": "(auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN') || (data.isNumber() && newData.isNumber() && newData.val() == data.val() + 1)",
+              ".write": "(auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN') || (root.child('polls').child($pollId).child('active').val() == true && data.isNumber() && newData.isNumber() && newData.val() == data.val() + 1)",
               ".validate": "newData.isNumber() && newData.val() >= 0"
             }
           }

@@ -55,6 +55,7 @@ function createInitialDemoData() {
       previsao: {
         question: "Qual foi o melhor time da rodada?",
         active: true,
+        showResults: false,
         createdAt: 1,
         options: {
           uniao: { label: "União FC", votes: 18 },
@@ -65,6 +66,7 @@ function createInitialDemoData() {
       melhor: {
         question: "Quem foi o melhor jogador da rodada?",
         active: true,
+        showResults: false,
         createdAt: 2,
         options: {
           joao: { label: "João", votes: 12 },
@@ -76,6 +78,7 @@ function createInitialDemoData() {
       pior: {
         question: "Quem ficou devendo futebol hoje?",
         active: true,
+        showResults: false,
         createdAt: 3,
         options: {
           joao: { label: "João", votes: 4 },
@@ -171,7 +174,12 @@ function normalizeGames(rawGames) {
 
 function normalizePolls(rawPolls) {
   return Object.entries(rawPolls || {})
-    .map(([id, poll]) => ({ id, ...poll }))
+    .map(([id, poll]) => ({
+      id,
+      ...poll,
+      active: Boolean(poll?.active),
+      showResults: Boolean(poll?.showResults)
+    }))
     .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
 }
 
@@ -267,16 +275,22 @@ export const dataService = {
   async vote(pollId, optionId) {
     if (!firebaseIsConfigured) {
       const data = getDemoData();
-      const option = data.polls?.[pollId]?.options?.[optionId];
+      const poll = data.polls?.[pollId];
+      if (!poll?.active) throw new Error("Esta votação já foi encerrada.");
+      const option = poll.options?.[optionId];
       if (!option) throw new Error("Opção não encontrada.");
       option.votes = Number(option.votes || 0) + 1;
       setDemoData(data);
       return;
     }
 
-    const { db, ref, runTransaction } = await loadFirebase();
+    const { db, ref, get, runTransaction } = await loadFirebase();
+    const activeSnapshot = await get(ref(db, `polls/${pollId}/active`));
+    if (activeSnapshot.val() !== true) throw new Error("Esta votação já foi encerrada.");
+
     const voteRef = ref(db, `polls/${pollId}/options/${optionId}/votes`);
-    await runTransaction(voteRef, (current) => Number(current || 0) + 1);
+    const transaction = await runTransaction(voteRef, (current) => Number(current || 0) + 1);
+    if (!transaction.committed) throw new Error("Não foi possível registrar o voto.");
   },
 
   async login(email, password) {
@@ -363,6 +377,8 @@ export const dataService = {
     const poll = {
       question: String(question),
       active: Boolean(active),
+      showResults: false,
+      closedAt: null,
       createdAt: Date.now(),
       options: optionObject
     };
@@ -381,17 +397,27 @@ export const dataService = {
     return pollRef.key;
   },
 
-  async setPollActive(pollId, active) {
+  async setPollState(pollId, { active, showResults }) {
+    const state = {
+      active: Boolean(active),
+      showResults: Boolean(showResults),
+      closedAt: !active && showResults ? Date.now() : null
+    };
+
     if (!firebaseIsConfigured) {
       const data = getDemoData();
       if (!data.polls[pollId]) throw new Error("Votação não encontrada.");
-      data.polls[pollId].active = Boolean(active);
+      Object.assign(data.polls[pollId], state);
       setDemoData(data);
       return;
     }
 
-    const { db, ref, set } = await loadFirebase();
-    await set(ref(db, `polls/${pollId}/active`), Boolean(active));
+    const { db, ref, update } = await loadFirebase();
+    await update(ref(db, `polls/${pollId}`), state);
+  },
+
+  async setPollActive(pollId, active) {
+    return this.setPollState(pollId, { active, showResults: false });
   },
 
   async resetPoll(pollId) {

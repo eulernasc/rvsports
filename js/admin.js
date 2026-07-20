@@ -262,6 +262,23 @@ function startPollEdit(poll) {
   elements.pollForm.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+function getPollResultSummary(poll) {
+  const options = Object.values(poll.options || {}).map((option) => ({
+    label: option.label || "Opção",
+    votes: Number(option.votes || 0)
+  }));
+  const total = options.reduce((sum, option) => sum + option.votes, 0);
+  const maxVotes = options.length ? Math.max(...options.map((option) => option.votes)) : 0;
+  const winners = total > 0 ? options.filter((option) => option.votes === maxVotes) : [];
+  return { options, total, maxVotes, winners };
+}
+
+function pollStatus(poll) {
+  if (poll.active) return { label: "Aberta", className: "" };
+  if (poll.showResults) return { label: "Encerrada • resultado publicado", className: "closed" };
+  return { label: "Oculta", className: "inactive" };
+}
+
 function renderAdminPolls(polls) {
   currentPolls = polls;
   if (!polls.length) {
@@ -270,17 +287,56 @@ function renderAdminPolls(polls) {
   }
 
   elements.adminPollList.innerHTML = polls.map((poll) => {
-    const total = Object.values(poll.options || {}).reduce((sum, option) => sum + Number(option.votes || 0), 0);
-    const optionCount = Object.keys(poll.options || {}).length;
+    const result = getPollResultSummary(poll);
+    const optionCount = result.options.length;
+    const status = pollStatus(poll);
+    const winnerText = result.winners.length === 1
+      ? `Mais votado: ${result.winners[0].label}`
+      : result.winners.length > 1
+        ? `Empate: ${result.winners.map((winner) => winner.label).join(" • ")}`
+        : "Sem votos registrados";
+
+    const resultPreview = poll.showResults ? `
+      <div class="admin-poll-result-preview">
+        <strong>${escapeHtml(winnerText)}</strong>
+        ${result.options
+          .sort((a, b) => b.votes - a.votes)
+          .map((option) => {
+            const percent = result.total ? Math.round((option.votes / result.total) * 1000) / 10 : 0;
+            const percentText = Number.isInteger(percent) ? percent : percent.toFixed(1).replace(".", ",");
+            const isWinner = result.total > 0 && option.votes === result.maxVotes;
+            return `<div class="admin-poll-result-row${isWinner ? " is-winner" : "}">
+              <span>${escapeHtml(option.label)}</span>
+              <b>${percentText}% • ${option.votes}</b>
+            </div>`;
+          }).join("")}
+      </div>` : "";
+
+    let stateButtons = "";
+    if (poll.active) {
+      stateButtons = `
+        <button class="button button-primary" type="button" data-action="close" data-id="${escapeHtml(poll.id)}">Encerrar e publicar resultado</button>
+        <button class="button button-secondary" type="button" data-action="hide" data-id="${escapeHtml(poll.id)}">Ocultar</button>`;
+    } else if (poll.showResults) {
+      stateButtons = `
+        <button class="button button-secondary" type="button" data-action="reopen" data-id="${escapeHtml(poll.id)}">Reabrir votação</button>
+        <button class="button button-secondary" type="button" data-action="hide" data-id="${escapeHtml(poll.id)}">Ocultar resultado</button>`;
+    } else {
+      stateButtons = `
+        <button class="button button-secondary" type="button" data-action="publish" data-id="${escapeHtml(poll.id)}">Publicar votação</button>
+        <button class="button button-secondary" type="button" data-action="publish-results" data-id="${escapeHtml(poll.id)}">Publicar resultado</button>`;
+    }
+
     return `
-      <article class="admin-poll-item">
-        <div>
+      <article class="admin-poll-item${poll.showResults ? " has-results" : "}">
+        <div class="admin-poll-main">
           <h3>${escapeHtml(poll.question)}</h3>
-          <p><span class="status-dot ${poll.active ? "" : "inactive"}">${poll.active ? "Visível" : "Oculta"}</span> • ${optionCount} opções • ${total} votos</p>
+          <p><span class="status-dot ${status.className}">${status.label}</span> • ${optionCount} opções • ${result.total} votos</p>
+          ${resultPreview}
         </div>
         <div class="admin-actions">
           <button class="button button-secondary" type="button" data-action="edit" data-id="${escapeHtml(poll.id)}">Editar</button>
-          <button class="button button-secondary" type="button" data-action="toggle" data-id="${escapeHtml(poll.id)}">${poll.active ? "Ocultar" : "Publicar"}</button>
+          ${stateButtons}
           <button class="button button-secondary" type="button" data-action="reset" data-id="${escapeHtml(poll.id)}">Zerar votos</button>
           <button class="button button-danger" type="button" data-action="delete" data-id="${escapeHtml(poll.id)}">Excluir</button>
         </div>
@@ -429,9 +485,25 @@ elements.adminPollList.addEventListener("click", async (event) => {
 
   button.disabled = true;
   try {
-    if (action === "toggle") {
-      await dataService.setPollActive(poll.id, !poll.active);
-      showToast(poll.active ? "Votação ocultada." : "Votação publicada.");
+    if (action === "close") {
+      if (!window.confirm("Encerrar a votação e publicar automaticamente as porcentagens e a opção mais votada?")) return;
+      await dataService.setPollState(poll.id, { active: false, showResults: true });
+      showToast("Votação encerrada e resultado publicado.");
+    }
+
+    if (action === "reopen" || action === "publish") {
+      await dataService.setPollState(poll.id, { active: true, showResults: false });
+      showToast(action === "reopen" ? "Votação reaberta." : "Votação publicada.");
+    }
+
+    if (action === "publish-results") {
+      await dataService.setPollState(poll.id, { active: false, showResults: true });
+      showToast("Resultado publicado.");
+    }
+
+    if (action === "hide") {
+      await dataService.setPollState(poll.id, { active: false, showResults: false });
+      showToast(poll.showResults ? "Resultado ocultado." : "Votação ocultada.");
     }
 
     if (action === "reset") {
