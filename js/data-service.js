@@ -3,7 +3,7 @@ import {
   firebaseIsConfigured,
   DEMO_ADMIN_EMAIL,
   DEMO_ADMIN_PASSWORD
-} from "./config.js";
+} from "./config.js?v=20260720-3";
 
 const STORAGE_KEY = "rvSportsDemoDataV2";
 const LEGACY_STORAGE_KEY = "rvSportsDemoDataV1";
@@ -247,6 +247,53 @@ function cleanGame(game, createdAt = Date.now()) {
   };
 }
 
+function friendlyFirebaseError(error) {
+  const code = String(error?.code || "");
+  if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
+    return new Error("E-mail ou senha incorretos.");
+  }
+  if (code === "auth/operation-not-allowed") {
+    return new Error("O login por e-mail e senha ainda não foi ativado no Firebase.");
+  }
+  if (code === "auth/unauthorized-domain") {
+    return new Error("O domínio eulernasc.github.io ainda não foi autorizado no Firebase Authentication.");
+  }
+  if (code === "auth/too-many-requests") {
+    return new Error("Muitas tentativas de login. Aguarde alguns minutos e tente novamente.");
+  }
+  if (code === "PERMISSION_DENIED" || code === "permission-denied") {
+    return new Error("Permissão negada pelo Realtime Database. Confira as regras publicadas.");
+  }
+  if (error?.message) return new Error(error.message);
+  return new Error("Não foi possível conectar ao Firebase.");
+}
+
+function subscribeFirstValue(reference, onValue, callback, transform) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let unsubscribe = () => {};
+    unsubscribe = onValue(
+      reference,
+      (snapshot) => {
+        callback(transform(snapshot.val()));
+        if (!settled) {
+          settled = true;
+          resolve(unsubscribe);
+        }
+      },
+      (error) => {
+        const friendly = friendlyFirebaseError(error);
+        if (!settled) {
+          settled = true;
+          reject(friendly);
+        } else {
+          console.error(friendly);
+        }
+      }
+    );
+  });
+}
+
 export const dataService = {
   isDemo: !firebaseIsConfigured,
 
@@ -258,7 +305,7 @@ export const dataService = {
     }
 
     const { db, ref, onValue } = await loadFirebase();
-    return onValue(ref(db, "games"), (snapshot) => callback(normalizeGames(snapshot.val())));
+    return subscribeFirstValue(ref(db, "games"), onValue, callback, normalizeGames);
   },
 
   async subscribePolls(callback) {
@@ -269,7 +316,7 @@ export const dataService = {
     }
 
     const { db, ref, onValue } = await loadFirebase();
-    return onValue(ref(db, "polls"), (snapshot) => callback(normalizePolls(snapshot.val())));
+    return subscribeFirstValue(ref(db, "polls"), onValue, callback, normalizePolls);
   },
 
   async vote(pollId, optionId) {
@@ -303,9 +350,13 @@ export const dataService = {
       return { email: DEMO_ADMIN_EMAIL, demo: true };
     }
 
-    const { auth, signInWithEmailAndPassword } = await loadFirebase();
-    const credential = await signInWithEmailAndPassword(auth, email, password);
-    return credential.user;
+    try {
+      const { auth, signInWithEmailAndPassword } = await loadFirebase();
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      return credential.user;
+    } catch (error) {
+      throw friendlyFirebaseError(error);
+    }
   },
 
   async logout() {
@@ -327,7 +378,26 @@ export const dataService = {
     }
 
     const { auth, onAuthStateChanged } = await loadFirebase();
-    return onAuthStateChanged(auth, callback);
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      let unsubscribe = () => {};
+      unsubscribe = onAuthStateChanged(
+        auth,
+        (user) => {
+          callback(user);
+          if (!settled) {
+            settled = true;
+            resolve(unsubscribe);
+          }
+        },
+        (error) => {
+          if (!settled) {
+            settled = true;
+            reject(friendlyFirebaseError(error));
+          }
+        }
+      );
+    });
   },
 
   async saveGame(game) {

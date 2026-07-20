@@ -1,4 +1,4 @@
-import { dataService } from "./data-service.js";
+import { dataService } from "./data-service.js?v=20260720-3";
 
 const elements = {
   modeBadge: document.querySelector("#modeBadge"),

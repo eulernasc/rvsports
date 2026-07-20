@@ -1,5 +1,5 @@
-import { dataService } from "./data-service.js";
-import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "./config.js";
+import { dataService } from "./data-service.js?v=20260720-3";
+import { DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from "./config.js?v=20260720-3";
 
 const $ = (selector) => document.querySelector(selector);
 

@@ -1,20 +1,22 @@
 {
   "rules": {
-    ".read": true,
+    ".read": false,
     ".write": false,
     "games": {
+      ".read": true,
       "$gameId": {
-        ".write": "auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN'",
-        ".validate": "newData.hasChildren(['title', 'date', 'home', 'away', 'homeScore', 'awayScore']) && newData.child('title').isString() && newData.child('date').isString() && newData.child('home').isString() && newData.child('away').isString() && newData.child('homeScore').isNumber() && newData.child('awayScore').isNumber() && newData.child('homeScore').val() >= 0 && newData.child('awayScore').val() >= 0"
+        ".write": "auth != null",
+        ".validate": "!newData.exists() || (newData.hasChildren(['title', 'date', 'home', 'away', 'homeScore', 'awayScore']) && newData.child('title').isString() && newData.child('date').isString() && newData.child('home').isString() && newData.child('away').isString() && newData.child('homeScore').isNumber() && newData.child('awayScore').isNumber() && newData.child('homeScore').val() >= 0 && newData.child('awayScore').val() >= 0)"
       }
     },
     "polls": {
+      ".read": true,
       "$pollId": {
-        ".write": "auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN'",
+        ".write": "auth != null",
         "options": {
           "$optionId": {
             "votes": {
-              ".write": "(auth != null && auth.token.email == 'TROQUE_PELO_SEU_EMAIL_ADMIN') || (root.child('polls').child($pollId).child('active').val() == true && data.isNumber() && newData.isNumber() && newData.val() == data.val() + 1)",
+              ".write": "auth != null || (root.child('polls').child($pollId).child('active').val() == true && data.isNumber() && newData.isNumber() && newData.val() == data.val() + 1)",
               ".validate": "newData.isNumber() && newData.val() >= 0"
             }
           }
