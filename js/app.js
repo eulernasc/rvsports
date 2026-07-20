@@ -159,7 +159,7 @@ function renderClosedPoll(poll, index) {
       const value = percentage(option.votes, result.total);
       const isWinner = result.total > 0 && option.votes === result.maxVotes;
       return `
-        <div class="poll-result-option${isWinner ? " is-winner" : "}" style="--result-progress:${value}%">
+        <div class="poll-result-option${isWinner ? " is-winner" : ""}" style="--result-progress:${value}%">
           <span class="poll-result-progress" aria-hidden="true"></span>
           <div class="poll-result-option-content">
             <strong>${escapeHtml(option.label)}${isWinner ? '<em>MAIS VOTADO</em>' : ""}</strong>

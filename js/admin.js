@@ -305,7 +305,7 @@ function renderAdminPolls(polls) {
             const percent = result.total ? Math.round((option.votes / result.total) * 1000) / 10 : 0;
             const percentText = Number.isInteger(percent) ? percent : percent.toFixed(1).replace(".", ",");
             const isWinner = result.total > 0 && option.votes === result.maxVotes;
-            return `<div class="admin-poll-result-row${isWinner ? " is-winner" : "}">
+            return `<div class="admin-poll-result-row${isWinner ? " is-winner" : ""}">
               <span>${escapeHtml(option.label)}</span>
               <b>${percentText}% • ${option.votes}</b>
             </div>`;
