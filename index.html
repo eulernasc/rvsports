@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f20aa6">
-  <meta name="description" content="RV SPORTS — placar ao vivo e votações do campeonato de bairro.">
+  <meta name="description" content="RV SPORTS — placares finais e votações do campeonato de bairro.">
   <title>RV SPORTS | Campeonato do Bairro</title>
   <link rel="icon" href="assets/favicon-rv.png">
   <link rel="stylesheet" href="css/styles.css">
@@ -18,7 +18,7 @@
       <img src="assets/logo-rv-sports.svg" alt="Logo RV SPORTS">
     </a>
     <nav aria-label="Navegação principal">
-      <a href="#jogo">Placar</a>
+      <a href="#resultados">Resultados</a>
       <a href="#votacoes">Votações</a>
       <a class="nav-admin" href="admin.html">Painel ADM</a>
     </nav>
@@ -28,11 +28,11 @@
     <section class="hero" id="inicio">
       <div class="hero-copy">
         <span class="eyebrow">CAMPEONATO DO BAIRRO</span>
-        <h1>A resenha começa <span>antes da bola rolar.</span></h1>
-        <p>Acompanhe o placar, escolha os destaques e vote quantas vezes quiser nas enquetes da rodada.</p>
+        <h1>A resenha continua <span>depois do apito final.</span></h1>
+        <p>Confira os resultados dos jogos e participe das votações da rodada.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="#votacoes">Votar agora</a>
-          <a class="button button-secondary" href="#jogo">Ver placar</a>
+          <a class="button button-secondary" href="#resultados">Ver resultados</a>
         </div>
       </div>
 
@@ -42,48 +42,18 @@
       </div>
     </section>
 
-    <section class="section" id="jogo">
+    <section class="section" id="resultados">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">JOGO EM DESTAQUE</span>
-          <h2>Placar da rodada</h2>
+          <span class="eyebrow">JOGOS ENCERRADOS</span>
+          <h2>Placares finais</h2>
         </div>
         <span class="connection-badge" id="modeBadge">Carregando...</span>
       </div>
 
-      <article class="scoreboard-card">
-        <div class="match-topline">
-          <div>
-            <span class="live-pill" id="gameStatus">PRÉ-JOGO</span>
-            <h3 id="gameTitle">Copa do Bairro</h3>
-          </div>
-          <div class="match-meta">
-            <span id="gameClock">Hoje</span>
-            <span id="gameVenue">Campo Municipal</span>
-          </div>
-        </div>
-
-        <div class="scoreboard">
-          <div class="team team-home">
-            <div class="team-shield" id="homeInitials">UF</div>
-            <strong id="homeName">União FC</strong>
-          </div>
-
-          <div class="score-center">
-            <div class="score-numbers">
-              <span id="homeScore">0</span>
-              <small>×</small>
-              <span id="awayScore">0</span>
-            </div>
-            <span class="score-caption">PLACAR AO VIVO</span>
-          </div>
-
-          <div class="team team-away">
-            <div class="team-shield" id="awayInitials">VR</div>
-            <strong id="awayName">Vila Real</strong>
-          </div>
-        </div>
-      </article>
+      <div class="final-games-grid" id="gamesGrid" aria-live="polite">
+        <div class="loading-card">Carregando resultados...</div>
+      </div>
     </section>
 
     <section class="section" id="votacoes">
@@ -92,14 +62,31 @@
           <span class="eyebrow">A VOZ DA TORCIDA</span>
           <h2>Votações abertas</h2>
         </div>
-        <p class="section-note">Sem limite por pessoa. Pode votar e provocar à vontade.</p>
+        <p class="section-note">Escolha uma votação. Para votar nela novamente, recarregue a página.</p>
       </div>
 
-      <div class="poll-grid" id="pollGrid" aria-live="polite">
+      <div class="poll-grid poll-topic-grid" id="pollGrid" aria-live="polite">
         <div class="loading-card">Carregando votações...</div>
       </div>
     </section>
   </main>
+
+  <div class="vote-modal hidden" id="voteModal" role="dialog" aria-modal="true" aria-labelledby="voteModalTitle">
+    <button class="vote-modal-backdrop" type="button" data-close-modal aria-label="Fechar votação"></button>
+    <div class="vote-modal-panel" role="document">
+      <button class="vote-modal-close" type="button" data-close-modal aria-label="Fechar">×</button>
+      <span class="eyebrow">ESCOLHA SEU VOTO</span>
+      <h2 id="voteModalTitle">Votação</h2>
+      <p class="vote-modal-description">Marque uma opção e confirme seu voto.</p>
+
+      <form id="voteForm">
+        <input type="hidden" id="votePollId">
+        <div class="vote-choice-list" id="voteChoices"></div>
+        <p class="form-message" id="voteMessage" aria-live="polite"></p>
+        <button class="button button-primary vote-submit" type="submit">Confirmar voto</button>
+      </form>
+    </div>
+  </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

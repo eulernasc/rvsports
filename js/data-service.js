@@ -5,75 +5,150 @@ import {
   DEMO_ADMIN_PASSWORD
 } from "./config.js";
 
-const STORAGE_KEY = "rvSportsDemoDataV1";
+const STORAGE_KEY = "rvSportsDemoDataV2";
+const LEGACY_STORAGE_KEY = "rvSportsDemoDataV1";
 const SESSION_KEY = "rvSportsDemoAdmin";
-const demoListeners = { game: new Set(), polls: new Set(), auth: new Set() };
+const demoListeners = { games: new Set(), polls: new Set(), auth: new Set() };
 let firebaseApi = null;
 
-const initialDemoData = {
-  game: {
-    title: "Copa do Bairro • Rodada 1",
-    home: "União FC",
-    away: "Vila Real",
-    homeScore: 1,
-    awayScore: 1,
-    status: "AO VIVO",
-    clock: "32' • 2º tempo",
-    venue: "Campo Municipal",
-    homeImage: "",
-    awayImage: ""
-  },
-  polls: {
-    previsao: {
-      question: "Quem vai vencer o jogo de hoje?",
-      active: true,
-      createdAt: 1,
-      options: {
-        casa: { label: "União FC", votes: 18 },
-        empate: { label: "Empate", votes: 7 },
-        fora: { label: "Vila Real", votes: 13 }
+function localIsoDate(offsetDays = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function createInitialDemoData() {
+  const today = localIsoDate();
+  return {
+    games: {
+      "final-1": {
+        title: "Copa do Bairro • Rodada 1",
+        date: today,
+        time: "09:00",
+        venue: "Campo Municipal",
+        home: "União FC",
+        away: "Vila Real",
+        homeScore: 2,
+        awayScore: 1,
+        homeImage: "",
+        awayImage: "",
+        createdAt: 1
+      },
+      "final-2": {
+        title: "Copa do Bairro • Rodada 1",
+        date: today,
+        time: "11:00",
+        venue: "Campo Municipal",
+        home: "Estrela Azul",
+        away: "Real Bairro",
+        homeScore: 0,
+        awayScore: 0,
+        homeImage: "",
+        awayImage: "",
+        createdAt: 2
       }
     },
-    melhor: {
-      question: "Quem está sendo o melhor jogador da rodada?",
-      active: true,
-      createdAt: 2,
-      options: {
-        joao: { label: "João", votes: 12 },
-        lucas: { label: "Lucas", votes: 20 },
-        matheus: { label: "Matheus", votes: 9 },
-        pedro: { label: "Pedro", votes: 5 }
-      }
-    },
-    pior: {
-      question: "Quem está devendo futebol hoje?",
-      active: true,
-      createdAt: 3,
-      options: {
-        joao: { label: "João", votes: 4 },
-        lucas: { label: "Lucas", votes: 3 },
-        matheus: { label: "Matheus", votes: 11 },
-        pedro: { label: "Pedro", votes: 8 }
+    polls: {
+      previsao: {
+        question: "Qual foi o melhor time da rodada?",
+        active: true,
+        createdAt: 1,
+        options: {
+          uniao: { label: "União FC", votes: 18 },
+          vila: { label: "Vila Real", votes: 13 },
+          estrela: { label: "Estrela Azul", votes: 7 }
+        }
+      },
+      melhor: {
+        question: "Quem foi o melhor jogador da rodada?",
+        active: true,
+        createdAt: 2,
+        options: {
+          joao: { label: "João", votes: 12 },
+          lucas: { label: "Lucas", votes: 20 },
+          matheus: { label: "Matheus", votes: 9 },
+          pedro: { label: "Pedro", votes: 5 }
+        }
+      },
+      pior: {
+        question: "Quem ficou devendo futebol hoje?",
+        active: true,
+        createdAt: 3,
+        options: {
+          joao: { label: "João", votes: 4 },
+          lucas: { label: "Lucas", votes: 3 },
+          matheus: { label: "Matheus", votes: 11 },
+          pedro: { label: "Pedro", votes: 8 }
+        }
       }
     }
-  }
-};
+  };
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function migrateLegacyData() {
+  const fallback = createInitialDemoData();
+  const legacySaved = localStorage.getItem(LEGACY_STORAGE_KEY);
+  if (!legacySaved) return fallback;
+
+  try {
+    const legacy = JSON.parse(legacySaved);
+    const games = {};
+    if (legacy.game && Object.keys(legacy.game).length) {
+      games["placar-migrado"] = {
+        title: String(legacy.game.title || "Copa do Bairro"),
+        date: localIsoDate(),
+        time: "",
+        venue: String(legacy.game.venue || ""),
+        home: String(legacy.game.home || "Time da casa"),
+        away: String(legacy.game.away || "Time visitante"),
+        homeScore: Math.max(0, Number(legacy.game.homeScore || 0)),
+        awayScore: Math.max(0, Number(legacy.game.awayScore || 0)),
+        homeImage: String(legacy.game.homeImage || ""),
+        awayImage: String(legacy.game.awayImage || ""),
+        createdAt: Date.now()
+      };
+    } else {
+      Object.assign(games, fallback.games);
+    }
+    return {
+      games,
+      polls: legacy.polls && Object.keys(legacy.polls).length ? legacy.polls : fallback.polls
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeDemoData(data) {
+  const fallback = createInitialDemoData();
+  return {
+    games: data?.games && typeof data.games === "object" ? data.games : fallback.games,
+    polls: data?.polls && typeof data.polls === "object" ? data.polls : fallback.polls
+  };
+}
+
 function getDemoData() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoData));
-    return clone(initialDemoData);
+    const migrated = migrateLegacyData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+    return clone(migrated);
   }
+
   try {
-    return JSON.parse(saved);
+    const parsed = normalizeDemoData(JSON.parse(saved));
+    return parsed;
   } catch {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDemoData));
-    return clone(initialDemoData);
+    const fallback = createInitialDemoData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
+    return clone(fallback);
   }
 }
 
@@ -82,16 +157,29 @@ function setDemoData(data) {
   notifyDemo();
 }
 
-function demoPollArray(data = getDemoData()) {
-  return Object.entries(data.polls || {})
+function normalizeGames(rawGames) {
+  return Object.entries(rawGames || {})
+    .map(([id, game]) => ({ id, ...game }))
+    .sort((a, b) => {
+      const dateCompare = String(b.date || "").localeCompare(String(a.date || ""));
+      if (dateCompare !== 0) return dateCompare;
+      const timeCompare = String(b.time || "").localeCompare(String(a.time || ""));
+      if (timeCompare !== 0) return timeCompare;
+      return Number(b.createdAt || 0) - Number(a.createdAt || 0);
+    });
+}
+
+function normalizePolls(rawPolls) {
+  return Object.entries(rawPolls || {})
     .map(([id, poll]) => ({ id, ...poll }))
-    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    .sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
 }
 
 function notifyDemo() {
   const data = getDemoData();
-  demoListeners.game.forEach((callback) => callback(clone(data.game)));
-  const polls = demoPollArray(data);
+  const games = normalizeGames(data.games);
+  const polls = normalizePolls(data.polls);
+  demoListeners.games.forEach((callback) => callback(clone(games)));
   demoListeners.polls.forEach((callback) => callback(clone(polls)));
 }
 
@@ -124,12 +212,6 @@ async function loadFirebase() {
   return firebaseApi;
 }
 
-function normalizePolls(rawPolls) {
-  return Object.entries(rawPolls || {})
-    .map(([id, poll]) => ({ id, ...poll }))
-    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-}
-
 function slugify(text, index) {
   const slug = text
     .normalize("NFD")
@@ -141,24 +223,40 @@ function slugify(text, index) {
   return `${slug || "opcao"}-${index + 1}`;
 }
 
+function cleanGame(game, createdAt = Date.now()) {
+  return {
+    title: String(game.title || "Copa do Bairro"),
+    date: String(game.date || localIsoDate()),
+    time: String(game.time || ""),
+    venue: String(game.venue || ""),
+    home: String(game.home || "Time da casa"),
+    away: String(game.away || "Time visitante"),
+    homeScore: Math.max(0, Number(game.homeScore || 0)),
+    awayScore: Math.max(0, Number(game.awayScore || 0)),
+    homeImage: String(game.homeImage || ""),
+    awayImage: String(game.awayImage || ""),
+    createdAt: Number(createdAt || Date.now())
+  };
+}
+
 export const dataService = {
   isDemo: !firebaseIsConfigured,
 
-  async subscribeGame(callback) {
+  async subscribeGames(callback) {
     if (!firebaseIsConfigured) {
-      demoListeners.game.add(callback);
-      callback(clone(getDemoData().game));
-      return () => demoListeners.game.delete(callback);
+      demoListeners.games.add(callback);
+      callback(clone(normalizeGames(getDemoData().games)));
+      return () => demoListeners.games.delete(callback);
     }
 
     const { db, ref, onValue } = await loadFirebase();
-    return onValue(ref(db, "game"), (snapshot) => callback(snapshot.val() || {}));
+    return onValue(ref(db, "games"), (snapshot) => callback(normalizeGames(snapshot.val())));
   },
 
   async subscribePolls(callback) {
     if (!firebaseIsConfigured) {
       demoListeners.polls.add(callback);
-      callback(clone(demoPollArray()));
+      callback(clone(normalizePolls(getDemoData().polls)));
       return () => demoListeners.polls.delete(callback);
     }
 
@@ -219,28 +317,41 @@ export const dataService = {
   },
 
   async saveGame(game) {
-    const cleanGame = {
-      title: String(game.title || "Copa do Bairro"),
-      home: String(game.home || "Time da casa"),
-      away: String(game.away || "Time visitante"),
-      homeScore: Math.max(0, Number(game.homeScore || 0)),
-      awayScore: Math.max(0, Number(game.awayScore || 0)),
-      status: String(game.status || "PRÉ-JOGO"),
-      clock: String(game.clock || ""),
-      venue: String(game.venue || ""),
-      homeImage: String(game.homeImage || ""),
-      awayImage: String(game.awayImage || "")
-    };
-
     if (!firebaseIsConfigured) {
       const data = getDemoData();
-      data.game = cleanGame;
+      const id = game.id || `game-${Date.now()}`;
+      const existingCreatedAt = data.games?.[id]?.createdAt;
+      data.games[id] = cleanGame(game, existingCreatedAt || game.createdAt || Date.now());
+      setDemoData(data);
+      return id;
+    }
+
+    const { db, ref, set, push, get } = await loadFirebase();
+    let gameRef;
+    let createdAt = game.createdAt || Date.now();
+
+    if (game.id) {
+      gameRef = ref(db, `games/${game.id}`);
+      const snapshot = await get(gameRef);
+      createdAt = snapshot.val()?.createdAt || createdAt;
+    } else {
+      gameRef = push(ref(db, "games"));
+    }
+
+    await set(gameRef, cleanGame(game, createdAt));
+    return gameRef.key;
+  },
+
+  async deleteGame(gameId) {
+    if (!firebaseIsConfigured) {
+      const data = getDemoData();
+      delete data.games[gameId];
       setDemoData(data);
       return;
     }
 
-    const { db, ref, set } = await loadFirebase();
-    await set(ref(db, "game"), cleanGame);
+    const { db, ref, remove } = await loadFirebase();
+    await remove(ref(db, `games/${gameId}`));
   },
 
   async savePoll({ id, question, options, active }) {

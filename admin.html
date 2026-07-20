@@ -25,7 +25,7 @@
     <section class="login-card" id="loginSection">
       <span class="eyebrow">ÁREA RESTRITA</span>
       <h1>Painel administrativo</h1>
-      <p>Entre para atualizar o placar e controlar as votações.</p>
+      <p>Entre para cadastrar placares finais e controlar as votações.</p>
 
       <form id="loginForm" class="form-stack">
         <label>
@@ -45,7 +45,7 @@
     <section id="adminDashboard" class="admin-dashboard hidden">
       <div class="admin-heading">
         <div>
-          <span class="eyebrow">CONTROLE DA RODADA</span>
+          <span class="eyebrow">CONTROLE DO CAMPEONATO</span>
           <h1>Painel RV SPORTS</h1>
           <p id="adminModeText">Conectado.</p>
         </div>
@@ -53,19 +53,36 @@
       </div>
 
       <div class="admin-grid">
-        <article class="admin-card admin-card-wide">
+        <article class="admin-card admin-card-wide admin-game-editor">
           <div class="card-heading">
             <div>
-              <span class="eyebrow">PLACAR</span>
-              <h2>Jogo em destaque</h2>
+              <span class="eyebrow">PLACAR FINAL</span>
+              <h2 id="gameFormTitle">Cadastrar resultado</h2>
             </div>
             <span class="connection-badge" id="adminModeBadge">Online</span>
           </div>
 
           <form id="gameForm" class="game-form">
+            <input type="hidden" id="gameIdInput">
+
             <label class="field-span-2">
-              Nome da partida/rodada
+              Campeonato, rodada ou identificação
               <input id="gameTitleInput" required placeholder="Copa do Bairro • Rodada 1">
+            </label>
+
+            <label>
+              Data do jogo
+              <input id="gameDateInput" type="date" required>
+            </label>
+
+            <label>
+              Horário
+              <input id="gameTimeInput" type="time">
+            </label>
+
+            <label class="field-span-2">
+              Local
+              <input id="gameVenueInput" placeholder="Campo Municipal">
             </label>
 
             <label>
@@ -78,12 +95,10 @@
             </label>
 
             <div class="team-image-field">
-              <div class="team-image-preview" id="homeImagePreview" aria-label="Prévia do escudo do time da casa">
-                <span>UF</span>
-              </div>
+              <div class="team-image-preview" id="homeImagePreview" aria-label="Prévia do escudo do time da casa"><span>UF</span></div>
               <div class="team-image-content">
                 <strong>Escudo do time da casa</strong>
-                <p>Opcional. A imagem é reduzida automaticamente antes de salvar.</p>
+                <p>Opcional. Sem imagem, o site mostra as iniciais.</p>
                 <div class="team-image-actions">
                   <label class="button button-secondary file-button">
                     Escolher imagem
@@ -95,12 +110,10 @@
             </div>
 
             <div class="team-image-field">
-              <div class="team-image-preview away-preview" id="awayImagePreview" aria-label="Prévia do escudo do time visitante">
-                <span>VR</span>
-              </div>
+              <div class="team-image-preview away-preview" id="awayImagePreview" aria-label="Prévia do escudo do time visitante"><span>VR</span></div>
               <div class="team-image-content">
                 <strong>Escudo do time visitante</strong>
-                <p>Se não escolher uma imagem, o site continuará mostrando as iniciais.</p>
+                <p>Opcional. Sem imagem, o site mostra as iniciais.</p>
                 <div class="team-image-actions">
                   <label class="button button-secondary file-button">
                     Escolher imagem
@@ -129,28 +142,10 @@
               </div>
             </div>
 
-            <label>
-              Situação
-              <select id="gameStatusInput">
-                <option>PRÉ-JOGO</option>
-                <option>AO VIVO</option>
-                <option>INTERVALO</option>
-                <option>ENCERRADO</option>
-                <option>ADIADO</option>
-              </select>
-            </label>
-
-            <label>
-              Horário/tempo
-              <input id="gameClockInput" placeholder="Hoje • 19h30 ou 32' 2ºT">
-            </label>
-
-            <label class="field-span-2">
-              Local
-              <input id="gameVenueInput" placeholder="Campo Municipal">
-            </label>
-
-            <button class="button button-primary field-span-2" type="submit">Salvar placar e informações</button>
+            <div class="form-button-row field-span-2">
+              <button class="button button-primary" type="submit" id="gameSubmitButton">Publicar placar final</button>
+              <button class="button button-ghost hidden" type="button" id="cancelGameEditButton">Cancelar edição</button>
+            </div>
             <p class="form-message field-span-2" id="gameMessage"></p>
           </form>
         </article>
@@ -166,7 +161,7 @@
           <form id="pollForm" class="form-stack">
             <input type="hidden" id="pollIdInput">
             <label>
-              Pergunta
+              Para o que é a votação?
               <input id="pollQuestionInput" required placeholder="Quem foi o melhor jogador?">
             </label>
             <label>
@@ -182,6 +177,18 @@
             <button class="button button-ghost hidden" type="button" id="cancelEditButton">Cancelar edição</button>
             <p class="form-message" id="pollMessage"></p>
           </form>
+        </article>
+
+        <article class="admin-card admin-card-wide">
+          <div class="card-heading">
+            <div>
+              <span class="eyebrow">RESULTADOS CADASTRADOS</span>
+              <h2>Placares finais</h2>
+            </div>
+          </div>
+          <div class="admin-game-list" id="adminGameList">
+            <div class="loading-card">Carregando placares...</div>
+          </div>
         </article>
 
         <article class="admin-card admin-card-wide">

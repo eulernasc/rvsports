@@ -15,7 +15,11 @@ const elements = {
   adminModeText: $("#adminModeText"),
   adminModeBadge: $("#adminModeBadge"),
   gameForm: $("#gameForm"),
+  gameFormTitle: $("#gameFormTitle"),
+  gameSubmitButton: $("#gameSubmitButton"),
+  cancelGameEditButton: $("#cancelGameEditButton"),
   gameMessage: $("#gameMessage"),
+  adminGameList: $("#adminGameList"),
   homeImageInput: $("#homeImageInput"),
   awayImageInput: $("#awayImageInput"),
   homeImagePreview: $("#homeImagePreview"),
@@ -32,10 +36,18 @@ const elements = {
   toast: $("#toast")
 };
 
+let currentGames = [];
 let currentPolls = [];
-let gameLoadedOnce = false;
+let editingGameCreatedAt = null;
 const teamImages = { home: "", away: "" };
-const teamImageDirty = { home: false, away: false };
+
+function localIsoDate() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 function setMessage(element, message, type = "") {
   element.textContent = message;
@@ -46,7 +58,7 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2600);
+  showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2800);
 }
 
 function escapeHtml(value = "") {
@@ -81,12 +93,13 @@ function renderImagePreview(side) {
     image.alt = `Prévia do escudo do ${nameInput.value || "time"}`;
     preview.appendChild(image);
     preview.classList.add("has-image");
-  } else {
-    const fallback = document.createElement("span");
-    fallback.textContent = initials(nameInput.value);
-    preview.appendChild(fallback);
-    preview.classList.remove("has-image");
+    return;
   }
+
+  const fallback = document.createElement("span");
+  fallback.textContent = initials(nameInput.value);
+  preview.appendChild(fallback);
+  preview.classList.remove("has-image");
 }
 
 function loadImageFile(file) {
@@ -120,6 +133,7 @@ async function compressTeamImage(file) {
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
+
   const context = canvas.getContext("2d", { alpha: true });
   if (!context) throw new Error("Seu navegador não conseguiu processar a imagem.");
   context.imageSmoothingEnabled = true;
@@ -139,9 +153,8 @@ async function handleTeamImageSelection(side, file) {
   setMessage(elements.gameMessage, "Preparando imagem...");
   try {
     teamImages[side] = await compressTeamImage(file);
-    teamImageDirty[side] = true;
     renderImagePreview(side);
-    setMessage(elements.gameMessage, "Imagem pronta. Clique em salvar para publicar.", "success");
+    setMessage(elements.gameMessage, "Imagem pronta. Salve o placar para publicar.", "success");
   } catch (error) {
     console.error(error);
     setMessage(elements.gameMessage, error.message || "Não foi possível processar a imagem.", "error");
@@ -150,28 +163,80 @@ async function handleTeamImageSelection(side, file) {
 
 function removeTeamImage(side) {
   teamImages[side] = "";
-  teamImageDirty[side] = true;
   const input = side === "home" ? elements.homeImageInput : elements.awayImageInput;
   input.value = "";
   renderImagePreview(side);
-  setMessage(elements.gameMessage, "Escudo removido. Clique em salvar para confirmar.");
+  setMessage(elements.gameMessage, "Escudo removido. Salve o placar para confirmar.");
 }
 
-function fillGameForm(game) {
-  if (!game || !Object.keys(game).length) return;
+function formatGameDate(value = "") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || "Sem data";
+  const [year, month, day] = value.split("-").map(Number);
+  return new Intl.DateTimeFormat("pt-BR").format(new Date(year, month - 1, day, 12));
+}
+
+function resetGameForm() {
+  elements.gameForm.reset();
+  $("#gameIdInput").value = "";
+  $("#gameDateInput").value = localIsoDate();
+  $("#homeScoreInput").value = 0;
+  $("#awayScoreInput").value = 0;
+  teamImages.home = "";
+  teamImages.away = "";
+  editingGameCreatedAt = null;
+  renderImagePreview("home");
+  renderImagePreview("away");
+  elements.gameFormTitle.textContent = "Cadastrar resultado";
+  elements.gameSubmitButton.textContent = "Publicar placar final";
+  elements.cancelGameEditButton.classList.add("hidden");
+  setMessage(elements.gameMessage, "");
+}
+
+function startGameEdit(game) {
+  $("#gameIdInput").value = game.id;
   $("#gameTitleInput").value = game.title || "";
+  $("#gameDateInput").value = game.date || localIsoDate();
+  $("#gameTimeInput").value = game.time || "";
+  $("#gameVenueInput").value = game.venue || "";
   $("#homeNameInput").value = game.home || "";
   $("#awayNameInput").value = game.away || "";
   $("#homeScoreInput").value = Number(game.homeScore || 0);
   $("#awayScoreInput").value = Number(game.awayScore || 0);
-  $("#gameStatusInput").value = game.status || "PRÉ-JOGO";
-  $("#gameClockInput").value = game.clock || "";
-  $("#gameVenueInput").value = game.venue || "";
-  if (!teamImageDirty.home) teamImages.home = game.homeImage || "";
-  if (!teamImageDirty.away) teamImages.away = game.awayImage || "";
+  teamImages.home = game.homeImage || "";
+  teamImages.away = game.awayImage || "";
+  editingGameCreatedAt = game.createdAt || null;
+  elements.homeImageInput.value = "";
+  elements.awayImageInput.value = "";
   renderImagePreview("home");
   renderImagePreview("away");
-  gameLoadedOnce = true;
+  elements.gameFormTitle.textContent = "Editar placar final";
+  elements.gameSubmitButton.textContent = "Salvar alterações";
+  elements.cancelGameEditButton.classList.remove("hidden");
+  setMessage(elements.gameMessage, "Editando o placar selecionado.");
+  elements.gameForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderAdminGames(games) {
+  currentGames = games;
+  if (!games.length) {
+    elements.adminGameList.innerHTML = '<div class="empty-state">Nenhum placar final cadastrado.</div>';
+    return;
+  }
+
+  elements.adminGameList.innerHTML = games.map((game) => `
+    <article class="admin-game-item">
+      <div class="admin-game-score">
+        <span>${Number(game.homeScore || 0)}</span><small>×</small><span>${Number(game.awayScore || 0)}</span>
+      </div>
+      <div class="admin-game-info">
+        <h3>${escapeHtml(game.home || "Time da casa")} x ${escapeHtml(game.away || "Time visitante")}</h3>
+        <p>${escapeHtml(game.title || "Copa do Bairro")} • ${escapeHtml(formatGameDate(game.date))}${game.time ? ` • ${escapeHtml(game.time)}` : ""}${game.venue ? ` • ${escapeHtml(game.venue)}` : ""}</p>
+      </div>
+      <div class="admin-actions">
+        <button class="button button-secondary" type="button" data-game-action="edit" data-id="${escapeHtml(game.id)}">Editar</button>
+        <button class="button button-danger" type="button" data-game-action="delete" data-id="${escapeHtml(game.id)}">Excluir</button>
+      </div>
+    </article>`).join("");
 }
 
 function resetPollForm() {
@@ -239,25 +304,16 @@ elements.loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-elements.logoutButton.addEventListener("click", async () => {
-  await dataService.logout();
-});
+elements.logoutButton.addEventListener("click", () => dataService.logout());
 
-elements.homeImageInput.addEventListener("change", () => {
-  handleTeamImageSelection("home", elements.homeImageInput.files?.[0]);
-});
-
-elements.awayImageInput.addEventListener("change", () => {
-  handleTeamImageSelection("away", elements.awayImageInput.files?.[0]);
-});
-
+elements.homeImageInput.addEventListener("change", () => handleTeamImageSelection("home", elements.homeImageInput.files?.[0]));
+elements.awayImageInput.addEventListener("change", () => handleTeamImageSelection("away", elements.awayImageInput.files?.[0]));
 elements.removeHomeImageButton.addEventListener("click", () => removeTeamImage("home"));
 elements.removeAwayImageButton.addEventListener("click", () => removeTeamImage("away"));
 
 $("#homeNameInput").addEventListener("input", () => {
   if (!teamImages.home) renderImagePreview("home");
 });
-
 $("#awayNameInput").addEventListener("input", () => {
   if (!teamImages.away) renderImagePreview("away");
 });
@@ -265,34 +321,67 @@ $("#awayNameInput").addEventListener("input", () => {
 document.querySelectorAll("[data-score-target]").forEach((button) => {
   button.addEventListener("click", () => {
     const input = document.getElementById(button.dataset.scoreTarget);
-    const next = Math.max(0, Number(input.value || 0) + Number(button.dataset.delta));
-    input.value = next;
+    input.value = Math.max(0, Number(input.value || 0) + Number(button.dataset.delta));
   });
 });
 
 elements.gameForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setMessage(elements.gameMessage, "Salvando...");
+  elements.gameSubmitButton.disabled = true;
+
   try {
     await dataService.saveGame({
-      title: $("#gameTitleInput").value,
-      home: $("#homeNameInput").value,
-      away: $("#awayNameInput").value,
+      id: $("#gameIdInput").value || null,
+      createdAt: editingGameCreatedAt,
+      title: $("#gameTitleInput").value.trim(),
+      date: $("#gameDateInput").value,
+      time: $("#gameTimeInput").value,
+      venue: $("#gameVenueInput").value.trim(),
+      home: $("#homeNameInput").value.trim(),
+      away: $("#awayNameInput").value.trim(),
       homeScore: $("#homeScoreInput").value,
       awayScore: $("#awayScoreInput").value,
-      status: $("#gameStatusInput").value,
-      clock: $("#gameClockInput").value,
-      venue: $("#gameVenueInput").value,
       homeImage: teamImages.home,
       awayImage: teamImages.away
     });
-    teamImageDirty.home = false;
-    teamImageDirty.away = false;
-    setMessage(elements.gameMessage, "Placar atualizado com sucesso.", "success");
-    showToast("Placar e escudos atualizados no site.");
+    showToast($("#gameIdInput").value ? "Placar atualizado." : "Placar final publicado.");
+    resetGameForm();
   } catch (error) {
     console.error(error);
     setMessage(elements.gameMessage, "Não foi possível salvar. Confira o login e as regras do banco.", "error");
+  } finally {
+    elements.gameSubmitButton.disabled = false;
+  }
+});
+
+elements.cancelGameEditButton.addEventListener("click", resetGameForm);
+
+elements.adminGameList.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-game-action]");
+  if (!button) return;
+  const game = currentGames.find((item) => item.id === button.dataset.id);
+  if (!game) return;
+
+  if (button.dataset.gameAction === "edit") {
+    startGameEdit(game);
+    return;
+  }
+
+  if (button.dataset.gameAction === "delete") {
+    const confirmed = window.confirm(`Excluir o placar ${game.home} x ${game.away}?`);
+    if (!confirmed) return;
+    button.disabled = true;
+    try {
+      await dataService.deleteGame(game.id);
+      showToast("Placar excluído.");
+      if ($("#gameIdInput").value === game.id) resetGameForm();
+    } catch (error) {
+      console.error(error);
+      showToast("Não foi possível excluir o placar.");
+    } finally {
+      button.disabled = false;
+    }
   }
 });
 
@@ -316,7 +405,6 @@ elements.pollForm.addEventListener("submit", async (event) => {
       options,
       active: $("#pollActiveInput").checked
     });
-    setMessage(elements.pollMessage, "Votação salva.", "success");
     showToast("Votação salva com sucesso.");
     resetPollForm();
   } catch (error) {
@@ -330,7 +418,6 @@ elements.cancelEditButton.addEventListener("click", resetPollForm);
 elements.adminPollList.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
-
   const poll = currentPolls.find((item) => item.id === button.dataset.id);
   if (!poll) return;
 
@@ -348,15 +435,13 @@ elements.adminPollList.addEventListener("click", async (event) => {
     }
 
     if (action === "reset") {
-      const confirmed = window.confirm("Zerar todos os votos desta enquete?");
-      if (!confirmed) return;
+      if (!window.confirm("Zerar todos os votos desta enquete?")) return;
       await dataService.resetPoll(poll.id);
       showToast("Votos zerados.");
     }
 
     if (action === "delete") {
-      const confirmed = window.confirm("Excluir esta votação definitivamente?");
-      if (!confirmed) return;
+      if (!window.confirm("Excluir esta votação definitivamente?")) return;
       await dataService.deletePoll(poll.id);
       showToast("Votação excluída.");
       if ($("#pollIdInput").value === poll.id) resetPollForm();
@@ -376,30 +461,27 @@ if (dataService.isDemo) {
 } else {
   elements.demoHint.classList.add("hidden");
   elements.adminModeBadge.textContent = "Firebase online";
-  elements.adminModeText.textContent = "Alterações sincronizadas em tempo real com o site público.";
+  elements.adminModeText.textContent = "Alterações sincronizadas com o site público.";
 }
 
 dataService.onAuthChange((user) => {
   const loggedIn = Boolean(user);
   elements.loginSection.classList.toggle("hidden", loggedIn);
   elements.dashboard.classList.toggle("hidden", !loggedIn);
-  if (loggedIn) {
-    elements.loginPassword.value = "";
-  }
+  if (loggedIn) elements.loginPassword.value = "";
 }).catch((error) => {
   console.error(error);
   setMessage(elements.loginMessage, "Erro ao verificar o login.", "error");
 });
 
-dataService.subscribeGame((game) => {
-  const editingTextField = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
-  const hasPendingImage = teamImageDirty.home || teamImageDirty.away;
-  if (!gameLoadedOnce || (!editingTextField && !hasPendingImage)) {
-    fillGameForm(game);
-  }
-}).catch(console.error);
+dataService.subscribeGames(renderAdminGames).catch((error) => {
+  console.error(error);
+  elements.adminGameList.innerHTML = '<div class="empty-state">Não foi possível carregar os placares.</div>';
+});
 
 dataService.subscribePolls(renderAdminPolls).catch((error) => {
   console.error(error);
   elements.adminPollList.innerHTML = '<div class="empty-state">Não foi possível carregar as votações.</div>';
 });
+
+resetGameForm();

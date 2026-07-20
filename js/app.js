@@ -2,24 +2,23 @@ import { dataService } from "./data-service.js";
 
 const elements = {
   modeBadge: document.querySelector("#modeBadge"),
-  gameStatus: document.querySelector("#gameStatus"),
-  gameTitle: document.querySelector("#gameTitle"),
-  gameClock: document.querySelector("#gameClock"),
-  gameVenue: document.querySelector("#gameVenue"),
-  homeName: document.querySelector("#homeName"),
-  awayName: document.querySelector("#awayName"),
-  homeInitials: document.querySelector("#homeInitials"),
-  awayInitials: document.querySelector("#awayInitials"),
-  homeScore: document.querySelector("#homeScore"),
-  awayScore: document.querySelector("#awayScore"),
+  gamesGrid: document.querySelector("#gamesGrid"),
   pollGrid: document.querySelector("#pollGrid"),
+  voteModal: document.querySelector("#voteModal"),
+  voteModalTitle: document.querySelector("#voteModalTitle"),
+  voteForm: document.querySelector("#voteForm"),
+  votePollId: document.querySelector("#votePollId"),
+  voteChoices: document.querySelector("#voteChoices"),
+  voteMessage: document.querySelector("#voteMessage"),
   toast: document.querySelector("#toast")
 };
 
-let votingLock = false;
+let currentPolls = [];
+let voteSubmitting = false;
+const votedThisPage = new Set();
 
 function initials(name = "") {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const words = String(name).trim().split(/\s+/).filter(Boolean);
   if (!words.length) return "RV";
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
@@ -38,49 +37,88 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2600);
+  showToast.timer = setTimeout(() => elements.toast.classList.remove("show"), 2800);
+}
+
+function setVoteMessage(message, type = "") {
+  elements.voteMessage.textContent = message;
+  elements.voteMessage.className = `form-message ${type}`.trim();
 }
 
 function isSafeImageSource(value = "") {
   return /^data:image\/(?:png|jpeg|webp);base64,/i.test(value) || /^https:\/\//i.test(value);
 }
 
-function renderTeamShield(element, imageSource, teamName) {
-  element.replaceChildren();
-
+function shieldMarkup(imageSource, teamName, side = "home") {
+  const safeName = escapeHtml(teamName || "time");
+  const sideClass = side === "away" ? " is-away" : "";
   if (isSafeImageSource(imageSource)) {
-    const image = document.createElement("img");
-    image.src = imageSource;
-    image.alt = `Escudo do ${teamName || "time"}`;
-    image.loading = "eager";
-    element.appendChild(image);
-    element.classList.add("has-image");
+    return `<div class="final-team-shield has-image${sideClass}"><img src="${escapeHtml(imageSource)}" alt="Escudo do ${safeName}"></div>`;
+  }
+  return `<div class="final-team-shield${sideClass}">${escapeHtml(initials(teamName))}</div>`;
+}
+
+function formatGameDate(value = "") {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || "Data não informada";
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day, 12, 0, 0);
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(date);
+}
+
+function renderGames(games) {
+  if (!games.length) {
+    elements.gamesGrid.innerHTML = '<div class="empty-state">Nenhum placar final cadastrado ainda.</div>';
     return;
   }
 
-  element.textContent = initials(teamName);
-  element.classList.remove("has-image");
-}
+  elements.gamesGrid.innerHTML = games.map((game) => {
+    const dateText = formatGameDate(game.date);
+    const timeText = game.time ? ` • ${escapeHtml(game.time)}` : "";
+    const venueText = game.venue ? `<span>${escapeHtml(game.venue)}</span>` : "";
+    const homeName = game.home || "Time da casa";
+    const awayName = game.away || "Time visitante";
 
-function renderGame(game) {
-  const status = game.status || "PRÉ-JOGO";
-  const homeName = game.home || "Time da casa";
-  const awayName = game.away || "Time visitante";
+    return `
+      <article class="final-score-card">
+        <div class="final-score-topline">
+          <div>
+            <span class="final-pill">ENCERRADO</span>
+            <h3>${escapeHtml(game.title || "Copa do Bairro")}</h3>
+          </div>
+          <div class="final-score-meta">
+            <span>${escapeHtml(dateText)}${timeText}</span>
+            ${venueText}
+          </div>
+        </div>
 
-  elements.gameStatus.textContent = status;
-  elements.gameStatus.classList.toggle("is-live", status === "AO VIVO");
-  elements.gameTitle.textContent = game.title || "Copa do Bairro";
-  elements.gameClock.textContent = game.clock || "Horário a definir";
-  elements.gameVenue.textContent = game.venue || "Local a definir";
-  elements.homeName.textContent = homeName;
-  elements.awayName.textContent = awayName;
-  renderTeamShield(elements.homeInitials, game.homeImage, homeName);
-  renderTeamShield(elements.awayInitials, game.awayImage, awayName);
-  elements.homeScore.textContent = Number(game.homeScore || 0);
-  elements.awayScore.textContent = Number(game.awayScore || 0);
+        <div class="final-score-body">
+          <div class="final-team">
+            ${shieldMarkup(game.homeImage, homeName, "home")}
+            <strong>${escapeHtml(homeName)}</strong>
+          </div>
+
+          <div class="final-score-numbers" aria-label="${escapeHtml(homeName)} ${Number(game.homeScore || 0)} a ${Number(game.awayScore || 0)} ${escapeHtml(awayName)}">
+            <span>${Number(game.homeScore || 0)}</span>
+            <small>×</small>
+            <span>${Number(game.awayScore || 0)}</span>
+            <em>PLACAR FINAL</em>
+          </div>
+
+          <div class="final-team final-team-away">
+            ${shieldMarkup(game.awayImage, awayName, "away")}
+            <strong>${escapeHtml(awayName)}</strong>
+          </div>
+        </div>
+      </article>`;
+  }).join("");
 }
 
 function renderPolls(polls) {
+  currentPolls = polls;
   const activePolls = polls.filter((poll) => poll.active);
 
   if (!activePolls.length) {
@@ -89,59 +127,113 @@ function renderPolls(polls) {
   }
 
   elements.pollGrid.innerHTML = activePolls.map((poll, index) => {
-    const options = Object.entries(poll.options || {});
-    const total = options.reduce((sum, [, option]) => sum + Number(option.votes || 0), 0);
-
-    const optionButtons = options.map(([optionId, option]) => {
-      const votes = Number(option.votes || 0);
-      const percentage = total > 0 ? Math.round((votes / total) * 100) : 0;
-      return `
-        <button class="poll-option" type="button" data-poll-id="${escapeHtml(poll.id)}" data-option-id="${escapeHtml(optionId)}" style="--progress:${percentage}%">
-          <span class="option-progress"></span>
-          <span class="option-content">
-            <strong>${escapeHtml(option.label)}</strong>
-            <span>${percentage}% • ${votes}</span>
-          </span>
-        </button>`;
-    }).join("");
+    const options = Object.values(poll.options || {});
+    const total = options.reduce((sum, option) => sum + Number(option.votes || 0), 0);
+    const alreadyVoted = votedThisPage.has(poll.id);
 
     return `
-      <article class="poll-card">
-        <div class="poll-card-header">
-          <div>
-            <span class="eyebrow">VOTAÇÃO ${String(index + 1).padStart(2, "0")}</span>
-            <h3>${escapeHtml(poll.question)}</h3>
-          </div>
-          <span class="vote-count">${total} voto${total === 1 ? "" : "s"}</span>
-        </div>
-        <div class="poll-options">${optionButtons}</div>
-      </article>`;
+      <button class="poll-topic-card${alreadyVoted ? " is-voted" : ""}" type="button" data-poll-id="${escapeHtml(poll.id)}" ${alreadyVoted ? "aria-disabled=\"true\"" : ""}>
+        <span class="poll-topic-number">VOTAÇÃO ${String(index + 1).padStart(2, "0")}</span>
+        <strong>${escapeHtml(poll.question)}</strong>
+        <span class="poll-topic-footer">
+          <span>${options.length} opç${options.length === 1 ? "ão" : "ões"} • ${total} voto${total === 1 ? "" : "s"}</span>
+          <b>${alreadyVoted ? "Voto enviado" : "Abrir votação →"}</b>
+        </span>
+      </button>`;
   }).join("");
 }
 
-elements.pollGrid.addEventListener("click", async (event) => {
-  const button = event.target.closest(".poll-option");
-  if (!button || votingLock) return;
+function openVoteModal(poll) {
+  if (!poll) return;
+  if (votedThisPage.has(poll.id)) {
+    showToast("Você já votou nesta votação. Recarregue a página para votar nela novamente.");
+    return;
+  }
 
-  votingLock = true;
-  button.disabled = true;
+  const options = Object.entries(poll.options || {});
+  elements.votePollId.value = poll.id;
+  elements.voteModalTitle.textContent = poll.question || "Votação";
+  elements.voteChoices.innerHTML = options.map(([optionId, option], index) => `
+    <label class="vote-choice">
+      <input type="radio" name="voteOption" value="${escapeHtml(optionId)}" ${index === 0 ? "" : ""}>
+      <span class="vote-check" aria-hidden="true"></span>
+      <strong>${escapeHtml(option.label)}</strong>
+    </label>`).join("");
+  setVoteMessage("");
+  elements.voteModal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => elements.voteChoices.querySelector("input")?.focus(), 40);
+}
+
+function closeVoteModal() {
+  if (voteSubmitting) return;
+  elements.voteModal.classList.add("hidden");
+  document.body.classList.remove("modal-open");
+  elements.voteForm.reset();
+  elements.votePollId.value = "";
+  setVoteMessage("");
+}
+
+elements.pollGrid.addEventListener("click", (event) => {
+  const card = event.target.closest(".poll-topic-card");
+  if (!card) return;
+  const poll = currentPolls.find((item) => item.id === card.dataset.pollId);
+  openVoteModal(poll);
+});
+
+elements.voteForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (voteSubmitting) return;
+
+  const pollId = elements.votePollId.value;
+  const selected = elements.voteForm.querySelector('input[name="voteOption"]:checked');
+  if (!selected) {
+    setVoteMessage("Marque uma opção antes de confirmar.", "error");
+    return;
+  }
+
+  if (votedThisPage.has(pollId)) {
+    setVoteMessage("Você já votou nesta votação. Recarregue a página para votar novamente.", "error");
+    return;
+  }
+
+  voteSubmitting = true;
+  const submitButton = elements.voteForm.querySelector("button[type='submit']");
+  submitButton.disabled = true;
+  setVoteMessage("Registrando seu voto...");
+
   try {
-    await dataService.vote(button.dataset.pollId, button.dataset.optionId);
-    showToast("Voto registrado! Pode votar novamente quando quiser.");
+    await dataService.vote(pollId, selected.value);
+    votedThisPage.add(pollId);
+    renderPolls(currentPolls);
+    voteSubmitting = false;
+    closeVoteModal();
+    showToast("Voto registrado! Para votar nesta opção novamente, recarregue a página.");
   } catch (error) {
     console.error(error);
-    showToast("Não foi possível registrar o voto agora.");
+    setVoteMessage("Não foi possível registrar o voto agora.", "error");
+    voteSubmitting = false;
   } finally {
-    button.disabled = false;
-    setTimeout(() => { votingLock = false; }, 220);
+    submitButton.disabled = false;
   }
 });
 
-elements.modeBadge.textContent = dataService.isDemo ? "Modo demonstração" : "Atualização em tempo real";
+document.querySelectorAll("[data-close-modal]").forEach((button) => {
+  button.addEventListener("click", closeVoteModal);
+});
 
-dataService.subscribeGame(renderGame).catch((error) => {
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !elements.voteModal.classList.contains("hidden")) {
+    closeVoteModal();
+  }
+});
+
+elements.modeBadge.textContent = dataService.isDemo ? "Modo demonstração" : "Resultados atualizados";
+
+dataService.subscribeGames(renderGames).catch((error) => {
   console.error(error);
-  showToast("Erro ao carregar o placar.");
+  elements.gamesGrid.innerHTML = '<div class="empty-state">Não foi possível carregar os placares.</div>';
+  showToast("Erro ao carregar os resultados.");
 });
 
 dataService.subscribePolls(renderPolls).catch((error) => {

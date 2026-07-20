@@ -1,57 +1,46 @@
-# RV SPORTS — Site de votação e placar
+# RV SPORTS — placares finais e votações
 
-Site estático compatível com GitHub Pages, com visual preto, branco e rosa baseado na identidade da RV SPORTS.
+Site estático preparado para GitHub Pages e integração com Firebase Realtime Database + Authentication.
 
-## O que já vem pronto
+## O que esta versão faz
 
-- Placar em destaque com atualização pelo painel administrativo.
-- Escudos opcionais dos times com compressão automática e iniciais como alternativa.
-- Situação do jogo: pré-jogo, ao vivo, intervalo, encerrado ou adiado.
-- Votações ilimitadas e resultados em porcentagem.
-- Cadastro, edição, publicação, ocultação, exclusão e zeragem das votações.
-- Login administrativo.
-- Layout responsivo para celular e computador.
-- Modo demonstração sem banco de dados.
-- Integração preparada para Firebase Realtime Database + Authentication.
+- Mostra vários placares finais, inclusive vários jogos no mesmo dia.
+- Permite cadastrar, editar e excluir cada resultado pelo painel administrativo.
+- Permite adicionar escudo para os dois times; sem imagem, aparecem as iniciais.
+- Exibe as votações como cartões com o tema/pergunta da votação.
+- Ao clicar em uma votação, abre um modal com as opções.
+- O visitante escolhe somente uma opção por envio.
+- Depois de votar em uma enquete, precisa recarregar a página para votar nela novamente.
+- Permite criar, editar, ocultar, publicar, zerar e excluir votações.
+- Funciona em modo demonstração antes da configuração do Firebase.
 
-## Testar agora, sem configurar nada
+## Teste em modo demonstração
 
-Abra o projeto por um servidor local. Exemplo com VS Code: extensão **Live Server**.
-
-No modo demonstração, o painel usa:
+Painel: `admin.html`
 
 - E-mail: `admin@rvsports.com`
 - Senha: `123456`
 
-Os dados ficam somente no navegador usado no teste. Para que todos vejam o mesmo placar e as mesmas votações, configure o Firebase.
-
-## Configurar o Firebase
-
-1. Crie um projeto no Firebase e registre um aplicativo Web.
-2. Crie um **Realtime Database**.
-3. Em **Authentication**, ative o login por e-mail e senha e crie o usuário administrador.
-4. Abra `js/config.js` e substitua todos os campos `COLE_AQUI` pela configuração do seu aplicativo Web.
-5. Abra `database.rules.json`, troque `TROQUE_PELO_SEU_EMAIL_ADMIN` pelo mesmo e-mail criado no Authentication.
-6. Cole o conteúdo de `database.rules.json` nas regras do Realtime Database e publique.
-7. Entre em `admin.html`, cadastre o jogo e as votações reais.
+No modo demonstração, os dados ficam apenas no navegador.
 
 ## Publicar no GitHub Pages
 
-1. Crie um repositório e envie todos os arquivos mantendo as pastas.
-2. No repositório, abra **Settings → Pages**.
-3. Em **Build and deployment**, escolha **Deploy from a branch**.
-4. Selecione a branch principal e a pasta raiz `/`.
-5. Salve e aguarde a publicação.
+1. Envie as pastas `assets`, `css` e `js` para a raiz do repositório.
+2. Envie também `index.html`, `admin.html`, `database.rules.json`, `README.md` e `.gitignore`.
+3. No GitHub, abra **Settings → Pages**.
+4. Use **Deploy from a branch**, branch `main` e pasta `/(root)`.
 
-## Observação importante
+## Configurar o Firebase depois
 
-O projeto foi feito propositalmente para permitir votos ilimitados. Isso significa que uma pessoa pode clicar várias vezes e também automatizar votos. É adequado para brincadeira e resenha; não deve ser tratado como uma votação oficial ou auditável.
+1. Crie um projeto e registre um aplicativo Web.
+2. Crie o Realtime Database.
+3. Ative Authentication por e-mail e senha.
+4. Crie o usuário administrador.
+5. Cole a configuração do aplicativo em `js/config.js`.
+6. Troque `TROQUE_PELO_SEU_EMAIL_ADMIN` em `database.rules.json` pelo e-mail do administrador.
+7. Publique essas regras no Realtime Database.
 
-## Arquivos da identidade visual
+## Estrutura usada no banco
 
-A pasta `assets` também inclui cópias das imagens originais enviadas:
-
-- `logo-rv-original.jpg`: logo horizontal ajustada utilizada no cabeçalho, destaque principal, rodapé e painel administrativo.
-- Os demais arquivos de logo foram mantidos apenas como referência.
-
-O layout foi construído ao redor da identidade, sem redesenhar ou descaracterizar a marca.
+- `games`: coleção com todos os placares finais.
+- `polls`: coleção com as votações e contadores de votos.

@@ -1,14 +1,15 @@
-RV SPORTS — PACOTE COMPLETO
+RV SPORTS — VERSÃO ATUALIZADA
 
-1. Extraia este arquivo ZIP.
-2. Abra a pasta RV-SPORTS-SITE-COMPLETO-FINAL.
-3. Arraste TODOS os arquivos e pastas de dentro dela para a raiz do seu repositório no GitHub.
-4. Confirme a substituição dos arquivos com o mesmo nome.
-5. Aguarde o GitHub Pages atualizar e depois pressione Ctrl + F5 no site.
+1. Extraia o ZIP.
+2. Abra a pasta RV-SPORTS-SITE-COMPLETO.
+3. Arraste TODO o conteúdo dela para a raiz do repositório no GitHub.
+4. Substitua os arquivos com o mesmo nome.
+5. Depois da publicação, atualize o site com Ctrl + F5.
 
-A logo foi corrigida para:
-- ficar sem foto de fundo;
-- não cortar no bloco principal;
-- manter RV SPORTS em rosa e branco;
-- usar o círculo rosa com relevo;
-- manter boa qualidade no cabeçalho e no destaque principal.
+Principais mudanças:
+- vários placares finais;
+- nenhum placar ao vivo;
+- cadastro, edição e exclusão de jogos no painel;
+- votação abre em modal;
+- um voto por enquete a cada carregamento da página;
+- escudos opcionais com iniciais como alternativa.
